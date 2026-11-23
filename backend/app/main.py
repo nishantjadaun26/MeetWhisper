@@ -15,8 +15,8 @@ async def lifespan(app: FastAPI):
     # Ensure upload directory exists
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 
-    # For dev / SQLite test environments, ensure tables are created
-    if "sqlite" in settings.DATABASE_URL:
+    # Ensure SQLite tables exist if running SQLite
+    if "sqlite" in str(engine.url):
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 

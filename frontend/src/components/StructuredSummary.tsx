@@ -2,15 +2,10 @@ import React, { useState } from 'react';
 import { MeetingAnalysis, ActionItem } from '../types/meeting';
 import { formatTime } from '../utils/format';
 import {
-  Sparkles,
-  CheckCircle2,
-  HelpCircle,
   Clock,
-  Layers,
-  Calendar,
   User,
-  CheckSquare,
-  Square
+  Calendar,
+  Check,
 } from 'lucide-react';
 
 interface StructuredSummaryProps {
@@ -32,38 +27,35 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto space-y-6 pr-2">
+    <div className="flex-1 overflow-y-auto space-y-6 pr-2 animate-slide-up">
       {/* Executive Summary */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg backdrop-blur">
-        <div className="flex items-center space-x-2 mb-2 text-cyan-400">
-          <Sparkles className="h-4 w-4" />
-          <h3 className="font-semibold text-xs tracking-wider uppercase text-cyan-400">
-            Executive Summary
-          </h3>
-        </div>
-        <p className="text-xs leading-relaxed text-slate-300 font-normal">
+      <section className="rounded-xl border border-white/[0.06] bg-[#0c0e14] p-4">
+        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-2">
+          Overview
+        </h3>
+        <p className="text-xs leading-relaxed text-zinc-300">
           {analysis.executive_summary}
         </p>
-      </div>
+      </section>
 
       {/* Decisions */}
       {analysis.decisions_json && analysis.decisions_json.length > 0 && (
-        <div className="rounded-xl border border-emerald-900/40 bg-emerald-950/10 p-4 shadow-lg">
-          <div className="flex items-center space-x-2 mb-3 text-emerald-400">
-            <CheckCircle2 className="h-4 w-4" />
-            <h3 className="font-semibold text-xs tracking-wider uppercase text-emerald-400">
-              Key Decisions ({analysis.decisions_json.length})
+        <section className="space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+              Decisions ({analysis.decisions_json.length})
             </h3>
           </div>
-          <div className="space-y-2.5">
+
+          <div className="space-y-1.5">
             {analysis.decisions_json.map((d, idx) => (
               <div
                 key={idx}
                 onClick={() => onSeek(d.timestamp_start)}
-                className="group flex flex-col justify-between rounded-lg border border-emerald-900/30 bg-slate-900/70 p-3 transition hover:border-emerald-500/50 hover:bg-slate-900 cursor-pointer"
+                className="group cursor-pointer rounded-lg border border-white/[0.05] bg-[#0c0e14] p-3 transition-all duration-150 hover:border-white/[0.12] hover:bg-white/[0.02]"
               >
                 <div className="flex items-start justify-between">
-                  <span className="font-medium text-xs text-slate-100 group-hover:text-emerald-300 transition">
+                  <span className="text-xs font-medium text-zinc-200 group-hover:text-white transition">
                     {d.statement}
                   </span>
                   <button
@@ -71,46 +63,46 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
                       e.stopPropagation();
                       onSeek(d.timestamp_start);
                     }}
-                    className="flex shrink-0 ml-2 items-center space-x-1 rounded bg-emerald-950/60 px-1.5 py-0.5 font-mono text-[11px] text-emerald-400 border border-emerald-800/40 hover:bg-emerald-500/20"
-                    title="Click to seek audio"
+                    className="flex shrink-0 ml-3 items-center space-x-1 font-mono text-[10px] text-zinc-500 hover:text-sky-400"
+                    title="Seek audio"
                   >
                     <Clock className="h-2.5 w-2.5" />
                     <span>{formatTime(d.timestamp_start)}</span>
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1 italic">{d.context}</p>
+                <p className="text-[11px] text-zinc-500 mt-1">{d.context}</p>
                 {d.speaker && (
-                  <div className="mt-2 flex items-center text-[10px] text-slate-500">
-                    <User className="mr-1 h-3 w-3" />
-                    <span>Decided by {d.speaker}</span>
+                  <div className="mt-1.5 flex items-center text-[10px] text-zinc-500 font-mono">
+                    <User className="mr-1 h-2.5 w-2.5" />
+                    <span>{d.speaker}</span>
                   </div>
                 )}
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Action Items */}
       {analysis.action_items_json && analysis.action_items_json.length > 0 && (
-        <div className="rounded-xl border border-blue-900/40 bg-blue-950/10 p-4 shadow-lg">
-          <div className="flex items-center space-x-2 mb-3 text-blue-400">
-            <CheckSquare className="h-4 w-4" />
-            <h3 className="font-semibold text-xs tracking-wider uppercase text-blue-400">
-              Action Items ({analysis.action_items_json.length})
+        <section className="space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+              Actions ({analysis.action_items_json.length})
             </h3>
           </div>
-          <div className="space-y-2">
+
+          <div className="space-y-1.5">
             {analysis.action_items_json.map((a: ActionItem, idx: number) => {
               const isChecked = !!completedTasks[idx];
               return (
                 <div
                   key={idx}
                   onClick={() => onSeek(a.timestamp_start)}
-                  className={`group flex items-center justify-between rounded-lg border p-3 transition cursor-pointer ${
+                  className={`group flex items-center justify-between rounded-lg border p-3 transition-all duration-150 cursor-pointer ${
                     isChecked
-                      ? 'border-slate-800 bg-slate-900/30 opacity-60'
-                      : 'border-blue-900/30 bg-slate-900/70 hover:border-blue-500/50 hover:bg-slate-900'
+                      ? 'border-white/[0.03] bg-black/20 opacity-50'
+                      : 'border-white/[0.05] bg-[#0c0e14] hover:border-white/[0.12] hover:bg-white/[0.02]'
                   }`}
                 >
                   <div className="flex items-center space-x-3 overflow-hidden">
@@ -119,31 +111,32 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
                         e.stopPropagation();
                         toggleTask(idx);
                       }}
-                      className="text-slate-400 hover:text-cyan-400"
+                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
+                        isChecked
+                          ? 'border-emerald-500/80 bg-emerald-500/20 text-emerald-400'
+                          : 'border-white/[0.2] hover:border-white/[0.4]'
+                      }`}
                     >
-                      {isChecked ? (
-                        <CheckSquare className="h-4 w-4 text-emerald-400" />
-                      ) : (
-                        <Square className="h-4 w-4" />
-                      )}
+                      {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
                     </button>
+
                     <div className="flex flex-col">
                       <span
-                        className={`text-xs ${
-                          isChecked ? 'line-through text-slate-500' : 'text-slate-200 group-hover:text-blue-300'
+                        className={`text-xs transition-all ${
+                          isChecked ? 'line-through text-zinc-500' : 'text-zinc-200 group-hover:text-white'
                         }`}
                       >
                         {a.task}
                       </span>
-                      <div className="flex items-center space-x-2 mt-1">
+                      <div className="flex items-center space-x-2 mt-0.5 text-[10px] text-zinc-500 font-mono">
                         {a.owner && (
-                          <span className="flex items-center text-[10px] text-blue-400">
+                          <span className="flex items-center">
                             <User className="mr-0.5 h-2.5 w-2.5" />
                             {a.owner}
                           </span>
                         )}
                         {a.deadline && (
-                          <span className="flex items-center text-[10px] text-slate-400">
+                          <span className="flex items-center">
                             <Calendar className="mr-0.5 h-2.5 w-2.5" />
                             {a.deadline}
                           </span>
@@ -157,8 +150,8 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
                       e.stopPropagation();
                       onSeek(a.timestamp_start);
                     }}
-                    className="flex shrink-0 ml-2 items-center space-x-1 rounded bg-blue-950/60 px-1.5 py-0.5 font-mono text-[11px] text-blue-400 border border-blue-800/40 hover:bg-blue-500/20"
-                    title="Click to seek audio"
+                    className="flex shrink-0 ml-3 items-center space-x-1 font-mono text-[10px] text-zinc-500 hover:text-sky-400"
+                    title="Seek audio"
                   >
                     <Clock className="h-2.5 w-2.5" />
                     <span>{formatTime(a.timestamp_start)}</span>
@@ -167,33 +160,33 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
               );
             })}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Open Questions */}
       {analysis.open_questions_json && analysis.open_questions_json.length > 0 && (
-        <div className="rounded-xl border border-amber-900/40 bg-amber-950/10 p-4 shadow-lg">
-          <div className="flex items-center space-x-2 mb-3 text-amber-400">
-            <HelpCircle className="h-4 w-4" />
-            <h3 className="font-semibold text-xs tracking-wider uppercase text-amber-400">
-              Open Questions ({analysis.open_questions_json.length})
+        <section className="space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+              Questions ({analysis.open_questions_json.length})
             </h3>
           </div>
-          <div className="space-y-2">
+
+          <div className="space-y-1.5">
             {analysis.open_questions_json.map((q, idx) => (
               <div
                 key={idx}
                 onClick={() => onSeek(q.timestamp_start)}
-                className="group flex items-start justify-between rounded-lg border border-amber-900/30 bg-slate-900/70 p-3 transition hover:border-amber-500/50 hover:bg-slate-900 cursor-pointer"
+                className="group flex items-start justify-between rounded-lg border border-white/[0.05] bg-[#0c0e14] p-3 transition-all duration-150 hover:border-white/[0.12] hover:bg-white/[0.02] cursor-pointer"
               >
                 <div>
-                  <span className="text-xs font-medium text-slate-200 group-hover:text-amber-300">
+                  <span className="text-xs font-medium text-zinc-200 group-hover:text-white">
                     {q.question}
                   </span>
                   {q.raised_by && (
-                    <div className="mt-1 flex items-center text-[10px] text-slate-400">
+                    <div className="mt-1 flex items-center text-[10px] text-zinc-500 font-mono">
                       <User className="mr-1 h-2.5 w-2.5" />
-                      <span>Raised by {q.raised_by}</span>
+                      <span>{q.raised_by}</span>
                     </div>
                   )}
                 </div>
@@ -202,8 +195,8 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
                     e.stopPropagation();
                     onSeek(q.timestamp_start);
                   }}
-                  className="flex shrink-0 ml-2 items-center space-x-1 rounded bg-amber-950/60 px-1.5 py-0.5 font-mono text-[11px] text-amber-400 border border-amber-800/40 hover:bg-amber-500/20"
-                  title="Click to seek audio"
+                  className="flex shrink-0 ml-3 items-center space-x-1 font-mono text-[10px] text-zinc-500 hover:text-sky-400"
+                  title="Seek audio"
                 >
                   <Clock className="h-2.5 w-2.5" />
                   <span>{formatTime(q.timestamp_start)}</span>
@@ -211,46 +204,7 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* Topic Segments */}
-      {analysis.topics_json && analysis.topics_json.length > 0 && (
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg">
-          <div className="flex items-center space-x-2 mb-3 text-slate-300">
-            <Layers className="h-4 w-4 text-cyan-400" />
-            <h3 className="font-semibold text-xs tracking-wider uppercase text-slate-300">
-              Discussion Topics
-            </h3>
-          </div>
-          <div className="space-y-2">
-            {analysis.topics_json.map((t, idx) => (
-              <div
-                key={idx}
-                onClick={() => onSeek(t.timestamp_start)}
-                className="group flex items-start justify-between rounded-lg border border-slate-800/80 bg-slate-900/40 p-2.5 transition hover:border-slate-700 hover:bg-slate-850 cursor-pointer"
-              >
-                <div>
-                  <h4 className="text-xs font-semibold text-slate-200 group-hover:text-cyan-400">
-                    {t.title}
-                  </h4>
-                  <p className="text-[11px] text-slate-400 mt-0.5">{t.summary}</p>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSeek(t.timestamp_start);
-                  }}
-                  className="flex shrink-0 ml-2 items-center space-x-1 rounded bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] text-slate-400 hover:text-cyan-300"
-                  title="Click to seek audio"
-                >
-                  <Clock className="h-2.5 w-2.5" />
-                  <span>{formatTime(t.timestamp_start)}</span>
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+        </section>
       )}
     </div>
   );

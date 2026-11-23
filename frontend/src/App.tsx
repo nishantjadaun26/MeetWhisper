@@ -16,12 +16,11 @@ import { ExportModal } from './components/ExportModal';
 import { formatTime } from './utils/format';
 import {
   Share2,
-  GitBranch,
-  FileText,
   Clock,
-  Sparkles,
+  Plus,
   Loader2,
-  Inbox
+  GitBranch,
+  FileText
 } from 'lucide-react';
 
 export default function App() {
@@ -29,14 +28,13 @@ export default function App() {
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | undefined>();
   const [currentMeeting, setCurrentMeeting] = useState<MeetingDetail | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
-  const [activeTab, setActiveTab] = useState<'summary' | 'graph'>('graph');
+  const [activeTab, setActiveTab] = useState<'graph' | 'summary'>('graph');
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const audioPlayerRef = useRef<AudioPlayerHandle>(null);
 
-  // Load meetings
   const loadMeetings = async (selectId?: string) => {
     try {
       const list = await fetchMeetings();
@@ -97,7 +95,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-slate-950 text-slate-100 overflow-hidden font-sans">
+    <div className="flex h-screen w-full bg-[#08090d] text-zinc-100 overflow-hidden font-sans select-none">
       {/* Sidebar */}
       <Sidebar
         meetings={meetings}
@@ -109,26 +107,22 @@ export default function App() {
 
       {/* Main Workspace Area */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* App Header */}
-        <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-800 bg-slate-900/90 px-6 backdrop-blur">
+        {/* Minimal App Header */}
+        <header className="flex h-12 shrink-0 items-center justify-between border-b border-white/[0.06] bg-[#0c0e14] px-5">
           <div className="flex items-center space-x-3">
-            <div className="h-3.5 w-3.5 rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.8)]" />
-            <span className="font-semibold tracking-wider text-slate-100 text-sm">
+            <span className="font-semibold tracking-tight text-zinc-100 text-xs uppercase font-mono">
               MeetWhisper
-            </span>
-            <span className="rounded bg-cyan-500/10 px-2 py-0.5 text-[11px] font-medium text-cyan-400 border border-cyan-500/20">
-              Speech Intelligence
             </span>
           </div>
 
           {currentMeeting && (
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-xs text-slate-300">
-                <span className="font-medium text-slate-100 max-w-[260px] truncate">
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2 text-xs">
+                <span className="font-medium text-zinc-200 max-w-[280px] truncate">
                   {currentMeeting.title}
                 </span>
-                <span className="flex items-center rounded-md bg-slate-800 px-2 py-0.5 font-mono text-[11px] text-slate-400">
-                  <Clock className="mr-1 h-3 w-3 text-cyan-400" />
+                <span className="flex items-center rounded bg-white/[0.04] px-2 py-0.5 font-mono text-[10px] text-zinc-400 border border-white/[0.04]">
+                  <Clock className="mr-1 h-2.5 w-2.5 text-zinc-500" />
                   {formatTime(currentMeeting.duration_seconds)}
                 </span>
               </div>
@@ -136,26 +130,25 @@ export default function App() {
               {/* Export Button */}
               <button
                 onClick={() => setIsExportOpen(true)}
-                className="flex items-center space-x-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-cyan-500 hover:text-cyan-400 active:scale-95"
+                className="flex items-center space-x-1.5 rounded-md border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-xs font-medium text-zinc-300 hover:bg-white/[0.08] hover:text-white transition"
               >
-                <Share2 className="h-3.5 w-3.5" />
+                <Share2 className="h-3 w-3" />
                 <span>Export</span>
               </button>
             </div>
           )}
         </header>
 
-        {/* Split-pane Workspace */}
+        {/* Workspace Body */}
         {isLoading ? (
-          <div className="flex flex-1 items-center justify-center space-x-2 text-cyan-400">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span className="text-sm font-medium">Loading meeting analysis...</span>
+          <div className="flex flex-1 items-center justify-center space-x-2 text-zinc-400">
+            <Loader2 className="h-5 w-5 animate-spin text-zinc-500" />
+            <span className="text-xs font-medium">Loading session...</span>
           </div>
         ) : currentMeeting ? (
-          <div className="flex flex-1 overflow-hidden p-4 gap-4">
+          <div className="flex flex-1 overflow-hidden p-3 gap-3">
             {/* Left Pane: Audio Waveform & Speaker Transcript */}
-            <div className="flex w-5/12 flex-col space-y-4 overflow-hidden">
-              {/* WaveSurfer Player */}
+            <div className="flex w-5/12 flex-col space-y-3 overflow-hidden">
               <AudioPlayer
                 ref={audioPlayerRef}
                 audioUrl={getAudioUrl(currentMeeting.id)}
@@ -163,7 +156,6 @@ export default function App() {
                 onTimeUpdate={(time) => setCurrentTime(time)}
               />
 
-              {/* Diarized Transcript Viewer */}
               <div className="flex-1 overflow-hidden">
                 <TranscriptViewer
                   segments={currentMeeting.transcript_segments || []}
@@ -174,82 +166,85 @@ export default function App() {
             </div>
 
             {/* Right Pane: Tabbed Structured Intelligence & Interactive Flowchart */}
-            <div className="flex w-7/12 flex-col overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60 p-4 shadow-xl backdrop-blur">
-              {/* Right Pane Tab Bar */}
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4">
-                <div className="flex space-x-2">
+            <div className="flex w-7/12 flex-col overflow-hidden rounded-xl border border-white/[0.06] bg-[#0c0e14] p-3.5">
+              {/* Minimal Sliding Tab Selector */}
+              <div className="flex items-center justify-between border-b border-white/[0.06] pb-2.5 mb-3">
+                <div className="relative flex items-center bg-black/40 p-1 rounded-lg border border-white/[0.04]">
+                  {/* Sliding highlight indicator */}
+                  <div
+                    className={`absolute top-1 bottom-1 w-[130px] rounded-md bg-white/[0.08] transition-all duration-200 ease-out ${
+                      activeTab === 'graph' ? 'left-1' : 'left-[135px]'
+                    }`}
+                  />
                   <button
                     onClick={() => setActiveTab('graph')}
-                    className={`flex items-center space-x-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${
-                      activeTab === 'graph'
-                        ? 'border border-cyan-500/40 bg-cyan-500/15 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.2)]'
-                        : 'border border-transparent text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                    className={`relative z-10 flex w-[130px] items-center justify-center space-x-1.5 py-1 text-xs font-medium transition-colors ${
+                      activeTab === 'graph' ? 'text-white' : 'text-zinc-400 hover:text-zinc-200'
                     }`}
                   >
-                    <GitBranch className="h-3.5 w-3.5" />
-                    <span>Interactive Flowchart</span>
+                    <GitBranch className="h-3 w-3" />
+                    <span>Visual Graph</span>
                   </button>
                   <button
                     onClick={() => setActiveTab('summary')}
-                    className={`flex items-center space-x-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${
-                      activeTab === 'summary'
-                        ? 'border border-cyan-500/40 bg-cyan-500/15 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.2)]'
-                        : 'border border-transparent text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                    className={`relative z-10 flex w-[130px] items-center justify-center space-x-1.5 py-1 text-xs font-medium transition-colors ${
+                      activeTab === 'summary' ? 'text-white' : 'text-zinc-400 hover:text-zinc-200'
                     }`}
                   >
-                    <FileText className="h-3.5 w-3.5" />
-                    <span>Structured Intelligence</span>
+                    <FileText className="h-3 w-3" />
+                    <span>Summary & Actions</span>
                   </button>
                 </div>
 
-                <div className="text-[11px] text-slate-500 font-mono">
-                  Click any node or bullet to seek audio
+                <div className="text-[10px] text-zinc-500 font-mono">
+                  Click to seek audio
                 </div>
               </div>
 
-              {/* Active Tab View */}
+              {/* Tab Content with smooth slide animation */}
               <div className="flex-1 overflow-hidden">
                 {activeTab === 'graph' ? (
                   currentMeeting.analysis?.graph_json ? (
-                    <GraphCanvas
-                      graph={currentMeeting.analysis.graph_json}
-                      graphType={currentMeeting.analysis.graph_type}
-                      onSeek={handleSeek}
-                    />
+                    <div key="graph" className="h-full w-full animate-slide-right">
+                      <GraphCanvas
+                        graph={currentMeeting.analysis.graph_json}
+                        graphType={currentMeeting.analysis.graph_type}
+                        onSeek={handleSeek}
+                      />
+                    </div>
                   ) : (
-                    <div className="flex h-full items-center justify-center text-xs text-slate-500">
-                      No visual graph generated for this meeting.
+                    <div className="flex h-full items-center justify-center text-xs text-zinc-600">
+                      No graph generated
                     </div>
                   )
                 ) : currentMeeting.analysis ? (
-                  <StructuredSummary
-                    analysis={currentMeeting.analysis}
-                    onSeek={handleSeek}
-                  />
+                  <div key="summary" className="h-full w-full animate-slide-left">
+                    <StructuredSummary
+                      analysis={currentMeeting.analysis}
+                      onSeek={handleSeek}
+                    />
+                  </div>
                 ) : (
-                  <div className="flex h-full items-center justify-center text-xs text-slate-500">
-                    No structured intelligence extracted yet.
+                  <div className="flex h-full items-center justify-center text-xs text-zinc-600">
+                    No analysis available
                   </div>
                 )}
               </div>
             </div>
           </div>
         ) : (
-          /* Empty Workspace State */
-          <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/60 text-cyan-400 mb-4 shadow-xl">
-              <Inbox className="h-8 w-8" />
-            </div>
-            <h3 className="text-base font-semibold text-slate-100 mb-1">No Meeting Selected</h3>
-            <p className="text-xs text-slate-400 max-w-sm mb-6">
-              Upload an audio or video file to generate speaker-diarized transcripts, structured summaries, and interactive flowcharts.
+          /* Clean Minimal Empty State */
+          <div className="flex flex-1 flex-col items-center justify-center p-8 text-center animate-fade">
+            <h3 className="text-sm font-medium text-zinc-200 mb-1">No Recording Selected</h3>
+            <p className="text-xs text-zinc-500 max-w-xs mb-5">
+              Upload an audio or video file to extract transcripts, action items, and interactive flowcharts.
             </p>
             <button
               onClick={() => setIsUploadOpen(true)}
-              className="flex items-center space-x-2 rounded-xl bg-cyan-500 px-5 py-2.5 text-xs font-semibold text-slate-950 transition hover:bg-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.4)] active:scale-95"
+              className="flex items-center space-x-1.5 rounded-lg border border-white/[0.1] bg-white/[0.05] px-4 py-2 text-xs font-medium text-zinc-200 hover:bg-white/[0.1] hover:border-white/[0.2] transition"
             >
-              <Sparkles className="h-4 w-4" />
-              <span>Upload New Recording</span>
+              <Plus className="h-3.5 w-3.5" />
+              <span>Upload Recording</span>
             </button>
           </div>
         )}

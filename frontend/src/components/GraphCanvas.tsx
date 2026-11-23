@@ -16,16 +16,7 @@ import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
 import { VisualGraph, NodeType } from '../types/meeting';
 import { formatTime } from '../utils/format';
-import {
-  Clock,
-  User,
-  CheckCircle2,
-  CheckSquare,
-  HelpCircle,
-  Lightbulb,
-  Compass,
-  ArrowRight,
-} from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 export interface CustomNodeData extends Record<string, unknown> {
   id: string;
@@ -45,93 +36,41 @@ interface GraphCanvasProps {
   onSeek: (time: number) => void;
 }
 
-const NODE_CONFIG: Record<
-  NodeType,
-  { border: string; bg: string; text: string; icon: React.ReactNode; glow: string }
-> = {
-  root: {
-    border: 'border-cyan-500',
-    bg: 'bg-slate-900/90',
-    text: 'text-cyan-400',
-    icon: <Compass className="h-3.5 w-3.5" />,
-    glow: 'shadow-[0_0_15px_rgba(34,211,238,0.3)]',
-  },
-  decision: {
-    border: 'border-emerald-500',
-    bg: 'bg-slate-900/90',
-    text: 'text-emerald-400',
-    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
-    glow: 'shadow-[0_0_15px_rgba(16,185,129,0.3)]',
-  },
-  action: {
-    border: 'border-blue-500',
-    bg: 'bg-slate-900/90',
-    text: 'text-blue-400',
-    icon: <CheckSquare className="h-3.5 w-3.5" />,
-    glow: 'shadow-[0_0_15px_rgba(59,130,246,0.3)]',
-  },
-  question: {
-    border: 'border-amber-500',
-    bg: 'bg-slate-900/90',
-    text: 'text-amber-400',
-    icon: <HelpCircle className="h-3.5 w-3.5" />,
-    glow: 'shadow-[0_0_15px_rgba(245,158,11,0.3)]',
-  },
-  insight: {
-    border: 'border-purple-500',
-    bg: 'bg-slate-900/90',
-    text: 'text-purple-400',
-    icon: <Lightbulb className="h-3.5 w-3.5" />,
-    glow: 'shadow-[0_0_15px_rgba(168,85,247,0.3)]',
-  },
-  milestone: {
-    border: 'border-pink-500',
-    bg: 'bg-slate-900/90',
-    text: 'text-pink-400',
-    icon: <ArrowRight className="h-3.5 w-3.5" />,
-    glow: 'shadow-[0_0_15px_rgba(236,72,153,0.3)]',
-  },
-  topic: {
-    border: 'border-slate-700',
-    bg: 'bg-slate-900/90',
-    text: 'text-slate-300',
-    icon: <Compass className="h-3.5 w-3.5" />,
-    glow: 'shadow-md',
-  },
-  subtopic: {
-    border: 'border-slate-800',
-    bg: 'bg-slate-900/80',
-    text: 'text-slate-400',
-    icon: <Compass className="h-3.5 w-3.5" />,
-    glow: 'shadow-sm',
-  },
+const TYPE_BADGES: Record<NodeType, { label: string; text: string; bg: string }> = {
+  root: { label: 'Root', text: 'text-zinc-200', bg: 'bg-white/[0.08]' },
+  decision: { label: 'Decision', text: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+  action: { label: 'Action', text: 'text-sky-400', bg: 'bg-sky-500/10' },
+  question: { label: 'Question', text: 'text-amber-400', bg: 'bg-amber-500/10' },
+  insight: { label: 'Insight', text: 'text-purple-400', bg: 'bg-purple-500/10' },
+  milestone: { label: 'Milestone', text: 'text-pink-400', bg: 'bg-pink-500/10' },
+  topic: { label: 'Topic', text: 'text-zinc-400', bg: 'bg-white/[0.04]' },
+  subtopic: { label: 'Subtopic', text: 'text-zinc-400', bg: 'bg-white/[0.04]' },
 };
 
-// Custom React Flow Node
+// Custom Minimal React Flow Node
 const CustomMeetingNode: React.FC<NodeProps<MeetingNodeType>> = ({ data }) => {
   const nodeType: NodeType = data.node_type || 'topic';
-  const config = NODE_CONFIG[nodeType] || NODE_CONFIG.topic;
+  const badge = TYPE_BADGES[nodeType] || TYPE_BADGES.topic;
 
   return (
     <div
       onClick={() => data.onSeek(data.timestamp_start)}
-      className={`group relative flex min-w-[200px] max-w-[280px] cursor-pointer flex-col rounded-xl border-2 p-3 backdrop-blur transition-all duration-200 hover:scale-105 active:scale-95 ${config.border} ${config.bg} ${config.glow}`}
+      className="group relative flex min-w-[210px] max-w-[260px] cursor-pointer flex-col rounded-xl border border-white/[0.08] bg-[#0c0e14] p-3 shadow-md transition-all duration-200 hover:border-white/[0.2] hover:bg-[#11141d] active:scale-[0.99]"
     >
-      <Handle type="target" position={Position.Left} className="!bg-cyan-500 !w-2 !h-2" />
+      <Handle type="target" position={Position.Left} className="!bg-zinc-500 !w-1.5 !h-1.5 !border-0" />
 
-      {/* Header: Type Pill & Timestamp */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-1.5">
-        <div className={`flex items-center space-x-1 text-[11px] font-semibold uppercase tracking-wider ${config.text}`}>
-          {config.icon}
-          <span>{nodeType}</span>
-        </div>
+        <span className={`rounded px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider ${badge.text} ${badge.bg}`}>
+          {badge.label}
+        </span>
         <button
           onClick={(e) => {
             e.stopPropagation();
             data.onSeek(data.timestamp_start);
           }}
-          className="flex items-center space-x-1 rounded bg-slate-800/90 px-1.5 py-0.5 font-mono text-[10px] text-cyan-300 hover:bg-cyan-500/20"
-          title="Click to seek audio"
+          className="flex items-center space-x-1 font-mono text-[10px] text-zinc-500 hover:text-sky-400 transition"
+          title="Seek audio"
         >
           <Clock className="h-2.5 w-2.5" />
           <span>{formatTime(data.timestamp_start)}</span>
@@ -139,17 +78,16 @@ const CustomMeetingNode: React.FC<NodeProps<MeetingNodeType>> = ({ data }) => {
       </div>
 
       {/* Label */}
-      <p className="text-xs font-medium leading-snug text-slate-100 mb-1">{data.label}</p>
+      <p className="text-xs font-medium leading-snug text-zinc-200">{data.label}</p>
 
-      {/* Speaker if present */}
+      {/* Speaker */}
       {data.speaker && (
-        <div className="mt-1 flex items-center text-[10px] text-slate-400">
-          <User className="mr-1 h-2.5 w-2.5 text-slate-500" />
-          <span>{data.speaker}</span>
-        </div>
+        <span className="mt-1.5 font-mono text-[10px] text-zinc-500">
+          {data.speaker}
+        </span>
       )}
 
-      <Handle type="source" position={Position.Right} className="!bg-cyan-500 !w-2 !h-2" />
+      <Handle type="source" position={Position.Right} className="!bg-zinc-500 !w-1.5 !h-1.5 !border-0" />
     </div>
   );
 };
@@ -158,7 +96,6 @@ const nodeTypes = {
   meetingNode: CustomMeetingNode,
 };
 
-// Dagre Layout Algorithm
 function getLayoutedElements(nodes: any[], edges: any[], direction = 'LR') {
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
@@ -166,12 +103,12 @@ function getLayoutedElements(nodes: any[], edges: any[], direction = 'LR') {
   const isHorizontal = direction === 'LR';
   dagreGraph.setGraph({
     rankdir: direction,
-    nodesep: 40,
-    ranksep: 80,
+    nodesep: 35,
+    ranksep: 70,
   });
 
   nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: 240, height: 110 });
+    dagreGraph.setNode(node.id, { width: 230, height: 100 });
   });
 
   edges.forEach((edge) => {
@@ -187,8 +124,8 @@ function getLayoutedElements(nodes: any[], edges: any[], direction = 'LR') {
       targetPosition: isHorizontal ? Position.Left : Position.Top,
       sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
       position: {
-        x: nodeWithPosition.x - 120,
-        y: nodeWithPosition.y - 55,
+        x: nodeWithPosition.x - 115,
+        y: nodeWithPosition.y - 50,
       },
     };
   });
@@ -223,11 +160,11 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       target: e.target,
       label: e.label || undefined,
       type: 'smoothstep',
-      animated: true,
-      style: { stroke: '#06b6d4', strokeWidth: 2 },
-      labelStyle: { fill: '#94a3b8', fontSize: 10, fontFamily: 'monospace' },
-      labelBgStyle: { fill: '#0f172a', fillOpacity: 0.8 },
-      labelBgPadding: [4, 4] as [number, number],
+      animated: false,
+      style: { stroke: '#3f3f46', strokeWidth: 1.5 },
+      labelStyle: { fill: '#71717a', fontSize: 10, fontFamily: 'monospace' },
+      labelBgStyle: { fill: '#0c0e14', fillOpacity: 0.9 },
+      labelBgPadding: [4, 2] as [number, number],
       labelBgBorderRadius: 4,
     }));
 
@@ -253,13 +190,13 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   );
 
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-xl border border-slate-800 bg-slate-950 shadow-2xl">
+    <div className="relative h-full w-full overflow-hidden rounded-xl border border-white/[0.06] bg-[#08090d] animate-slide-up">
       {/* Top Floating Controls */}
-      <div className="absolute right-4 top-4 z-10 flex items-center space-x-2 rounded-lg border border-slate-800 bg-slate-900/80 p-1.5 backdrop-blur shadow-lg">
+      <div className="absolute right-3 top-3 z-10 flex items-center space-x-1.5 rounded-lg border border-white/[0.08] bg-[#0c0e14]/90 p-1 backdrop-blur shadow-sm">
         <button
           onClick={() => setDirection(direction === 'LR' ? 'TB' : 'LR')}
-          className="rounded px-2 py-1 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-cyan-400"
-          title="Toggle layout direction"
+          className="rounded px-2 py-0.5 font-mono text-[11px] text-zinc-400 hover:text-white transition"
+          title="Toggle orientation"
         >
           {direction === 'LR' ? 'Horizontal →' : 'Vertical ↓'}
         </button>
@@ -273,22 +210,15 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
         fitView
-        minZoom={0.2}
-        maxZoom={2.0}
+        minZoom={0.25}
+        maxZoom={1.75}
       >
-        <Background color="#334155" gap={20} size={1} variant={BackgroundVariant.Dots} />
-        <Controls className="!bg-slate-900 !border-slate-800 !text-slate-300 fill-slate-300 rounded-lg overflow-hidden shadow-lg" />
+        <Background color="#1f232e" gap={20} size={1} variant={BackgroundVariant.Dots} />
+        <Controls className="!bg-[#0c0e14] !border-white/[0.08] !text-zinc-400 fill-zinc-400 rounded-lg overflow-hidden shadow-sm" />
         <MiniMap
-          nodeColor={(node: any) => {
-            const type = node.data?.node_type;
-            if (type === 'decision') return '#10b981';
-            if (type === 'action') return '#3b82f6';
-            if (type === 'question') return '#f59e0b';
-            if (type === 'root') return '#22d3ee';
-            return '#64748b';
-          }}
-          className="!bg-slate-900/90 !border-slate-800 !rounded-lg"
-          maskColor="rgba(15, 23, 42, 0.7)"
+          nodeColor="#3f3f46"
+          className="!bg-[#0c0e14]/90 !border-white/[0.08] !rounded-lg"
+          maskColor="rgba(8, 9, 13, 0.75)"
         />
       </ReactFlow>
     </div>

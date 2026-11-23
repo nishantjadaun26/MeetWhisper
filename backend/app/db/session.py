@@ -17,7 +17,7 @@ else:
         import asyncpg  # noqa: F401
     except ImportError:
         logger.warning("asyncpg not found in environment; falling back to SQLite for local session.")
-        db_url = settings.TEST_DATABASE_URL
+        db_url = "sqlite+aiosqlite:///./meetwhisper.db"
         connect_args["check_same_thread"] = False
 
 engine = create_async_engine(

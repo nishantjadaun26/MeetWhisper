@@ -47,12 +47,12 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
 
       const ws = WaveSurfer.create({
         container: containerRef.current,
-        waveColor: '#334155', // slate-700
-        progressColor: '#22d3ee', // cyan-400
-        cursorColor: '#06b6d4',
-        cursorWidth: 2,
-        height: 64,
-        barWidth: 3,
+        waveColor: '#27272a', // zinc-800
+        progressColor: '#38bdf8', // sky-400
+        cursorColor: '#71717a',
+        cursorWidth: 1.5,
+        height: 48,
+        barWidth: 2,
         barGap: 2,
         barRadius: 2,
         url: audioUrl,
@@ -126,73 +126,72 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
     };
 
     return (
-      <div className="flex flex-col rounded-xl border border-slate-800 bg-slate-900/90 p-4 shadow-xl backdrop-blur">
+      <div className="flex flex-col rounded-xl border border-white/[0.06] bg-[#0c0e14] p-3.5 transition-all">
         {/* Waveform area */}
-        <div className="relative mb-3 w-full">
+        <div className="relative mb-2.5 w-full">
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 text-xs text-cyan-400">
-              <div className="mr-2 h-3 w-3 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
+            <div className="absolute inset-0 flex items-center justify-center bg-[#0c0e14]/80 text-[11px] text-zinc-400 font-mono">
               Loading waveform...
             </div>
           )}
           <div ref={containerRef} className="cursor-pointer" />
         </div>
 
-        {/* Controls row */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            {/* Play / Pause button */}
+        {/* Minimal Controls Row */}
+        <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center space-x-2.5">
+            {/* Play/Pause Button */}
             <button
               onClick={togglePlayPause}
               disabled={isLoading}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500 text-slate-950 transition-all hover:bg-cyan-400 hover:shadow-[0_0_16px_rgba(34,211,238,0.5)] active:scale-95 disabled:opacity-50"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-zinc-950 hover:bg-zinc-200 active:scale-95 transition-all disabled:opacity-40"
               title={isPlaying ? 'Pause' : 'Play'}
             >
-              {isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="ml-0.5 h-5 w-5 fill-current" />}
+              {isPlaying ? <Pause className="h-3.5 w-3.5 fill-current" /> : <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />}
             </button>
 
-            {/* Skip buttons */}
+            {/* Skip Buttons */}
             <button
               onClick={() => handleSkip(-5)}
-              className="rounded p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
-              title="Skip back 5s"
+              className="p-1 text-zinc-400 hover:text-white transition"
+              title="Back 5s"
             >
-              <RotateCcw className="h-4 w-4" />
+              <RotateCcw className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => handleSkip(5)}
-              className="rounded p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
-              title="Skip forward 5s"
+              className="p-1 text-zinc-400 hover:text-white transition"
+              title="Forward 5s"
             >
-              <RotateCw className="h-4 w-4" />
+              <RotateCw className="h-3.5 w-3.5" />
             </button>
 
-            {/* Timestamp counter */}
-            <div className="font-mono text-xs text-slate-300">
-              <span className="text-cyan-400 font-medium">{formatTime(currentTime)}</span>
-              <span className="mx-1 text-slate-600">/</span>
+            {/* Timers */}
+            <div className="font-mono text-[11px] text-zinc-400 pl-1">
+              <span className="text-zinc-200">{formatTime(currentTime)}</span>
+              <span className="mx-1 text-zinc-600">/</span>
               <span>{formatTime(totalDuration)}</span>
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
-            {/* Playback speed toggle */}
+          <div className="flex items-center space-x-3">
+            {/* Speed toggle */}
             <button
               onClick={handleRateChange}
-              className="rounded border border-slate-700 bg-slate-800 px-2 py-1 font-mono text-xs font-semibold text-slate-300 transition hover:border-cyan-500 hover:text-cyan-400"
-              title="Change playback speed"
+              className="rounded border border-white/[0.08] px-2 py-0.5 font-mono text-[11px] text-zinc-400 hover:border-white/[0.2] hover:text-zinc-200 transition"
+              title="Playback speed"
             >
               {playbackRate}x
             </button>
 
-            {/* Volume slider */}
-            <div className="flex items-center space-x-2">
+            {/* Volume */}
+            <div className="flex items-center space-x-1.5">
               <button
                 onClick={toggleMute}
-                className="text-slate-400 hover:text-slate-200"
+                className="text-zinc-400 hover:text-zinc-200 transition"
                 title={isMuted ? 'Unmute' : 'Mute'}
               >
-                {isMuted || volume === 0 ? <VolumeX className="h-4 w-4 text-red-400" /> : <Volume2 className="h-4 w-4" />}
+                {isMuted || volume === 0 ? <VolumeX className="h-3.5 w-3.5 text-red-400" /> : <Volume2 className="h-3.5 w-3.5" />}
               </button>
               <input
                 type="range"
@@ -201,7 +200,7 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
                 step="0.05"
                 value={isMuted ? 0 : volume}
                 onChange={handleVolumeChange}
-                className="h-1 w-16 cursor-pointer appearance-none rounded-lg bg-slate-700 accent-cyan-400"
+                className="h-1 w-14 cursor-pointer appearance-none rounded-lg bg-zinc-800 accent-zinc-200"
               />
             </div>
           </div>
