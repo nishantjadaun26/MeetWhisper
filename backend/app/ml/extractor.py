@@ -28,7 +28,12 @@ OUTPUT FORMAT: Strictly valid JSON matching the schema with no surrounding Markd
 """
 
 
-def format_transcript_prompt(meeting_title: str, segments: List[SegmentResult], topic_chunks: List[TopicChunk]) -> str:
+def format_transcript_prompt(
+    meeting_title: str,
+    segments: List[SegmentResult],
+    topic_chunks: List[TopicChunk],
+    output_mode: str = "both"
+) -> str:
     transcript_text = "\n".join(
         f"[{seg.start_time:.2f}s - {seg.end_time:.2f}s] {seg.speaker}: {seg.text}"
         for seg in segments
@@ -41,7 +46,17 @@ def format_transcript_prompt(meeting_title: str, segments: List[SegmentResult], 
             for tc in topic_chunks
         )
 
+    mode_instruction = ""
+    if output_mode == "flowchart":
+        mode_instruction = "FOCUS: Generate a comprehensive visual flowchart with granular discussion nodes and directed relationship edges. Executive summary can be concise."
+    elif output_mode == "notes":
+        mode_instruction = "FOCUS: Generate thorough structured notes, executive summary, explicit decisions, detailed action items with owners and deadlines, and open questions. The graph field can be minimal."
+    else:
+        mode_instruction = "FOCUS: Generate both thorough structured notes (summary, decisions, actions) and a rich, fully-connected visual flowchart."
+
     return f"""Meeting Title: {meeting_title}
+MODE: {output_mode.upper()}
+{mode_instruction}
 
 DIARIZED TRANSCRIPT:
 {transcript_text}
@@ -56,10 +71,11 @@ async def extract_meeting_intelligence(
     transcript_segments: List[SegmentResult],
     topic_segments: List[TopicChunk],
     provider: Optional[BaseLLMProvider] = None,
+    output_mode: str = "both",
     max_retries: int = 2
 ) -> MeetingAnalysisExtract:
     llm = provider or get_llm_provider()
-    base_prompt = format_transcript_prompt(meeting_title, transcript_segments, topic_segments)
+    base_prompt = format_transcript_prompt(meeting_title, transcript_segments, topic_segments, output_mode=output_mode)
     current_prompt = base_prompt
 
     last_error: Optional[str] = None

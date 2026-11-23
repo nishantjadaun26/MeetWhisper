@@ -16,7 +16,7 @@ import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
 import { VisualGraph, NodeType } from '../types/meeting';
 import { formatTime } from '../utils/format';
-import { Clock } from 'lucide-react';
+import { Clock, GitBranch, Loader2 } from 'lucide-react';
 
 export interface CustomNodeData extends Record<string, unknown> {
   id: string;
@@ -34,6 +34,8 @@ interface GraphCanvasProps {
   graph: VisualGraph;
   graphType?: 'flowchart' | 'mindmap';
   onSeek: (time: number) => void;
+  onGenerateFlowchart?: () => void;
+  isGenerating?: boolean;
 }
 
 const TYPE_BADGES: Record<NodeType, { label: string; text: string; bg: string }> = {
@@ -136,8 +138,12 @@ function getLayoutedElements(nodes: any[], edges: any[], direction = 'LR') {
 export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   graph,
   onSeek,
+  onGenerateFlowchart,
+  isGenerating,
 }) => {
   const [direction, setDirection] = React.useState<'LR' | 'TB'>('LR');
+
+  const hasNodes = Boolean(graph && graph.nodes && graph.nodes.length > 0);
 
   const { initialNodes, initialEdges } = useMemo(() => {
     if (!graph || !graph.nodes || graph.nodes.length === 0) {
@@ -188,6 +194,34 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     },
     [onSeek]
   );
+
+  if (!hasNodes) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-8 text-center animate-fade rounded-xl border border-white/[0.06] bg-[#08090d]">
+        <div className="h-10 w-10 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-400 mb-3">
+          <GitBranch className="h-5 w-5 text-sky-400" />
+        </div>
+        <h3 className="text-xs font-semibold text-zinc-200 mb-1">Visual Flowchart Not Generated</h3>
+        <p className="text-[11px] text-zinc-500 max-w-xs mb-4">
+          You chose Notes Only during upload. You can synthesize a visual decision flowchart on demand.
+        </p>
+        {onGenerateFlowchart && (
+          <button
+            onClick={onGenerateFlowchart}
+            disabled={isGenerating}
+            className="flex items-center space-x-1.5 rounded-lg border border-sky-500/30 bg-sky-500/10 px-3.5 py-1.5 text-xs font-medium text-sky-300 hover:bg-sky-500/20 transition active:scale-95 disabled:opacity-50"
+          >
+            {isGenerating ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <GitBranch className="h-3.5 w-3.5" />
+            )}
+            <span>{isGenerating ? 'Generating Flowchart...' : 'Generate Visual Flowchart'}</span>
+          </button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-full w-full overflow-hidden rounded-xl border border-white/[0.06] bg-[#08090d] animate-slide-up">

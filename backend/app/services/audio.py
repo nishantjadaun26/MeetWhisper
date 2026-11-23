@@ -6,7 +6,12 @@ from typing import Tuple, Generator
 
 logger = logging.getLogger(__name__)
 
-SUPPORTED_EXTENSIONS = {".mp3", ".wav", ".m4a", ".mp4", ".webm", ".ogg", ".aac", ".flac"}
+SUPPORTED_EXTENSIONS = {
+    # Audio
+    ".mp3", ".wav", ".m4a", ".ogg", ".aac", ".flac", ".wma",
+    # Video
+    ".mp4", ".webm", ".mov", ".mkv", ".avi", ".m4v"
+}
 
 
 def is_supported_audio_extension(filename: str) -> bool:

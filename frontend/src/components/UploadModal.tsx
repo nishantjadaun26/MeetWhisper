@@ -7,6 +7,11 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
+  GitBranch,
+  FileText,
+  Layers,
+  Video,
+  Music
 } from 'lucide-react';
 
 interface UploadModalProps {
@@ -19,10 +24,10 @@ const STAGE_ORDER = ['queued', 'normalizing', 'transcribing', 'chunking', 'extra
 
 const STAGE_LABELS: Record<string, string> = {
   queued: 'Queued',
-  normalizing: 'Normalizing audio (16kHz PCM WAV)',
-  transcribing: 'Transcribing & labeling speakers',
-  chunking: 'Detecting topic boundaries',
-  extracting_graph: 'Synthesizing summary & validating graph',
+  normalizing: 'Normalizing media & extracting audio (16kHz PCM WAV)',
+  transcribing: 'Transcribing speech & labeling speakers',
+  chunking: 'Detecting semantic topic boundaries',
+  extracting_graph: 'Synthesizing intelligence & validating graph',
   completed: 'Processing complete',
   failed: 'Processing failed',
 };
@@ -34,12 +39,18 @@ export const UploadModal: React.FC<UploadModalProps> = ({
 }) => {
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');
+  const [outputMode, setOutputMode] = useState<'flowchart' | 'notes' | 'both'>('both');
   const [isUploading, setIsUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [jobProgress, setJobProgress] = useState<JobProgress | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
+
+  const isVideoFile = (f: File | null) => {
+    if (!f) return false;
+    return f.type.startsWith('video/') || /\.(mp4|webm|mov|mkv|avi|m4v)$/i.test(f.name);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -69,7 +80,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
     setErrorMessage(null);
 
     try {
-      const result = await uploadMeetingAudio(file, title);
+      const result = await uploadMeetingAudio(file, title, outputMode);
       const { meeting_id, job_id } = result;
 
       subscribeJobProgress(
@@ -108,9 +119,9 @@ export const UploadModal: React.FC<UploadModalProps> = ({
           </button>
         )}
 
-        <h2 className="text-sm font-semibold text-zinc-100 mb-1">Upload Recording</h2>
-        <p className="text-xs text-zinc-500 mb-5">
-          Process audio or video into transcripts, action items & flowcharts.
+        <h2 className="text-sm font-semibold text-zinc-100 mb-1">Upload Recording or Video</h2>
+        <p className="text-xs text-zinc-500 mb-4">
+          Process meeting audio or video into transcripts, action items & interactive flowcharts.
         </p>
 
         {!isUploading ? (
@@ -120,22 +131,78 @@ export const UploadModal: React.FC<UploadModalProps> = ({
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/[0.12] bg-white/[0.02] p-8 text-center transition hover:border-white/[0.25] hover:bg-white/[0.04] cursor-pointer"
+              className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/[0.12] bg-white/[0.02] p-6 text-center transition hover:border-white/[0.25] hover:bg-white/[0.04] cursor-pointer"
             >
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".mp3,.wav,.m4a,.mp4,.webm,.ogg,.flac,.aac"
+                accept=".mp3,.wav,.m4a,.mp4,.webm,.mov,.mkv,.avi,.ogg,.flac,.aac"
                 onChange={handleFileChange}
                 className="hidden"
               />
-              <UploadCloud className="h-8 w-8 text-zinc-400 mb-2" />
-              <p className="text-xs font-medium text-zinc-200">
+              <div className="flex items-center space-x-2 text-zinc-400 mb-2">
+                {file ? (
+                  isVideoFile(file) ? <Video className="h-6 w-6 text-sky-400" /> : <Music className="h-6 w-6 text-emerald-400" />
+                ) : (
+                  <UploadCloud className="h-6 w-6" />
+                )}
+              </div>
+              <p className="text-xs font-medium text-zinc-200 truncate max-w-xs">
                 {file ? file.name : 'Choose file or drag & drop'}
               </p>
               <p className="text-[10px] text-zinc-500 mt-1">
-                MP3, WAV, M4A, MP4, WEBM up to 250MB
+                Audio (MP3, WAV, M4A) or Video (MP4, WEBM, MOV, MKV) up to 250MB
               </p>
+            </div>
+
+            {/* Output Choice Selector */}
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+                Output Generation
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOutputMode('notes')}
+                  className={`flex flex-col items-center justify-center rounded-lg border p-2.5 text-center transition ${
+                    outputMode === 'notes'
+                      ? 'border-sky-500/50 bg-sky-500/10 text-white'
+                      : 'border-white/[0.06] bg-white/[0.02] text-zinc-400 hover:border-white/[0.15] hover:text-zinc-200'
+                  }`}
+                >
+                  <FileText className="h-4 w-4 mb-1" />
+                  <span className="text-[11px] font-medium">Notes Only</span>
+                  <span className="text-[9px] text-zinc-500">Summary & tasks</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setOutputMode('flowchart')}
+                  className={`flex flex-col items-center justify-center rounded-lg border p-2.5 text-center transition ${
+                    outputMode === 'flowchart'
+                      ? 'border-sky-500/50 bg-sky-500/10 text-white'
+                      : 'border-white/[0.06] bg-white/[0.02] text-zinc-400 hover:border-white/[0.15] hover:text-zinc-200'
+                  }`}
+                >
+                  <GitBranch className="h-4 w-4 mb-1" />
+                  <span className="text-[11px] font-medium">Flowchart Only</span>
+                  <span className="text-[9px] text-zinc-500">Visual decision map</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setOutputMode('both')}
+                  className={`flex flex-col items-center justify-center rounded-lg border p-2.5 text-center transition ${
+                    outputMode === 'both'
+                      ? 'border-sky-500/50 bg-sky-500/10 text-white'
+                      : 'border-white/[0.06] bg-white/[0.02] text-zinc-400 hover:border-white/[0.15] hover:text-zinc-200'
+                  }`}
+                >
+                  <Layers className="h-4 w-4 mb-1" />
+                  <span className="text-[11px] font-medium">Both</span>
+                  <span className="text-[9px] text-zinc-500">Complete suite</span>
+                </button>
+              </div>
             </div>
 
             {/* Title Input */}
