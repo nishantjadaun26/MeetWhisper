@@ -53,6 +53,9 @@ backend/uploads/
 *.m4a
 *.webm
 *.ogg
+*.db
+*.sqlite
+*.sqlite3
 
 # IDEs & OS
 .vscode/
