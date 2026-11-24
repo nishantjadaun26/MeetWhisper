@@ -121,6 +121,50 @@ async def execute_processing_pipeline(job_id: str, meeting_id: str, output_mode:
                 for s in existing_segments
             ]
 
+        # Check for sufficient content to generate intelligence / flowchart
+        total_words = sum(len(s.text.split()) for s in raw_segments)
+        has_content = len(raw_segments) > 0 and total_words >= 5
+
+        if not has_content:
+            if output_mode == "flowchart":
+                msg = "Not enough content for a flowchart in this recording."
+                await update_job_stage(job_id, "failed", 0, msg, error=msg)
+                return
+            elif output_mode == "notes":
+                msg = "Not enough content to generate notes in this recording."
+                await update_job_stage(job_id, "failed", 0, msg, error=msg)
+                return
+            else:
+                # Mode "both" (default on upload): store clean empty state without crashing
+                async with AsyncSessionLocal() as db:
+                    stmt = select(MeetingAnalysis).where(MeetingAnalysis.meeting_id == meeting_id)
+                    res = await db.execute(stmt)
+                    m_analysis = res.scalar_one_or_none()
+                    no_content_summary = "No spoken dialogue or structured discussion was detected in this recording."
+                    if not m_analysis:
+                        m_analysis = MeetingAnalysis(
+                            meeting_id=meeting_id,
+                            executive_summary=no_content_summary,
+                            decisions_json=[],
+                            action_items_json=[],
+                            open_questions_json=[],
+                            topics_json=[],
+                            graph_type="flowchart",
+                            graph_json={"nodes": [], "edges": []},
+                            validation_attempts=1
+                        )
+                        db.add(m_analysis)
+                    else:
+                        m_analysis.executive_summary = no_content_summary
+                        m_analysis.decisions_json = []
+                        m_analysis.action_items_json = []
+                        m_analysis.open_questions_json = []
+                        m_analysis.topics_json = []
+                        m_analysis.graph_json = {"nodes": [], "edges": []}
+                    await db.commit()
+                await update_job_stage(job_id, "completed", 100, "Recording processed (no speech detected).")
+                return
+
         # 3. Semantic Topic Chunking
         if not existing_topics:
             await update_job_stage(job_id, "chunking", 65, "Detecting semantic topic boundaries...")

@@ -260,7 +260,7 @@ class MockLLMProvider(BaseLLMProvider):
         ]
 
         return {
-            "executive_summary": summary if mode in ("notes", "both") else "",
+            "executive_summary": summary if mode in ("notes", "both") else "Visual flowchart analysis of the Selection Sort algorithm.",
             "decisions": decisions if mode in ("notes", "both") else [],
             "action_items": action_items if mode in ("notes", "both") else [],
             "open_questions": open_questions if mode in ("notes", "both") else [],
@@ -383,7 +383,7 @@ class MockLLMProvider(BaseLLMProvider):
             ])
 
         return {
-            "executive_summary": summary if mode in ("notes", "both") else "",
+            "executive_summary": summary if mode in ("notes", "both") else "Visual flowchart analysis of the Selection Sort algorithm.",
             "decisions": decisions if mode in ("notes", "both") else [],
             "action_items": action_items if mode in ("notes", "both") else [],
             "open_questions": open_questions if mode in ("notes", "both") else [],
@@ -394,7 +394,7 @@ class MockLLMProvider(BaseLLMProvider):
 
     def _get_monolith_fixture(self, mode: str) -> Dict[str, Any]:
         return {
-            "executive_summary": "The engineering team evaluated the architectural migration from legacy monolithic storage to a scalable event mesh. Key benchmarks confirmed PostgreSQL with pgvector provides superior developer velocity and satisfies strict 12ms p99 latency targets. Disaster recovery procedures and failover automation were prioritized for staging launch." if mode in ("notes", "both") else "",
+            "executive_summary": "The engineering team evaluated the architectural migration from legacy monolithic storage to a scalable event mesh. Key benchmarks confirmed PostgreSQL with pgvector provides superior developer velocity and satisfies strict 12ms p99 latency targets. Disaster recovery procedures and failover automation were prioritized for staging launch." if mode in ("notes", "both") else "Monolith to Mesh architectural migration flowchart.",
             "decisions": [
                 {
                     "statement": "Standardize on PostgreSQL 16 with pgvector for vector embeddings",

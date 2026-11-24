@@ -83,7 +83,7 @@ export const TranscriptViewer: React.FC<TranscriptViewerProps> = ({
       <div ref={containerRef} className="flex-1 overflow-y-auto p-3 space-y-2">
         {filteredSegments.length === 0 ? (
           <div className="flex h-full items-center justify-center text-xs text-[#B3AFCB]/50">
-            {segments.length === 0 ? 'No transcript segments' : 'No matching results'}
+            {segments.length === 0 ? 'No speech detected in this recording' : 'No matching results'}
           </div>
         ) : (
           filteredSegments.map((segment) => {

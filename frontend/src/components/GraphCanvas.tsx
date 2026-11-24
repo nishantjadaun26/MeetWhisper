@@ -33,6 +33,7 @@ export type MeetingNodeType = Node<CustomNodeData, 'meetingNode'>;
 interface GraphCanvasProps {
   graph: VisualGraph;
   graphType?: 'flowchart' | 'mindmap';
+  hasContent?: boolean;
   onSeek: (time: number) => void;
   onGenerateFlowchart?: () => void;
   isGenerating?: boolean;
@@ -154,6 +155,7 @@ function getLayoutedElements(
 
 export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   graph,
+  hasContent = true,
   onSeek,
   onGenerateFlowchart,
   isGenerating,
@@ -213,6 +215,20 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   );
 
   if (!hasNodes) {
+    if (!hasContent) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center p-8 text-center animate-fade rounded-xl border border-[#2E2B45] bg-[#09090F]">
+          <div className="h-10 w-10 rounded-full bg-white/[0.04] border border-[#2E2B45] flex items-center justify-center text-[#B3AFCB] mb-3">
+            <GitBranch className="h-5 w-5 text-[#B3AFCB]/40" />
+          </div>
+          <h3 className="text-xs font-semibold text-[#F1EFFA] mb-1">Not Enough Content for a Flowchart</h3>
+          <p className="text-[11px] text-[#B3AFCB] max-w-xs mb-4">
+            This recording contains no spoken dialogue or structured discussion to map into a flowchart.
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center animate-fade rounded-xl border border-[#2E2B45] bg-[#09090F]">
         <div className="h-10 w-10 rounded-full bg-white/[0.04] border border-[#2E2B45] flex items-center justify-center text-[#B3AFCB] mb-3">

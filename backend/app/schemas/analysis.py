@@ -51,10 +51,10 @@ class VisualGraph(BaseModel):
 
 
 class MeetingAnalysisExtract(BaseModel):
-    executive_summary: str = Field(..., min_length=10, description="Comprehensive executive summary of the meeting")
+    executive_summary: str = Field(default="", description="Executive summary of the meeting or empty if flowchart-only")
     decisions: List[DecisionItem] = Field(default_factory=list, description="Decisions concluded during the meeting")
     action_items: List[ActionItem] = Field(default_factory=list, description="Action items assigned")
     open_questions: List[OpenQuestion] = Field(default_factory=list, description="Open or unresolved questions")
     topic_segments: List[TopicSegmentItem] = Field(default_factory=list, description="Logical topic breakdown")
     graph_type: Literal["flowchart", "mindmap"] = Field("flowchart", description="Visual representation type")
-    graph: VisualGraph = Field(..., description="Interactive visual graph")
+    graph: VisualGraph = Field(default_factory=VisualGraph, description="Interactive visual graph")

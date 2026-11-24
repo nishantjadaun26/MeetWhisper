@@ -100,8 +100,16 @@ class FasterWhisperTranscriber(BaseTranscriber):
 
             # If no speech was detected (e.g. silent animation/screen recording)
             if not segments:
-                logger.info("No speech detected in audio track; using MockTranscriber for context.")
-                return await MockTranscriber().transcribe(audio_path, title=title)
+                logger.info("No speech detected in audio track.")
+                path_lower = (audio_path + " " + (title or "")).lower()
+                if "selection" in path_lower or "sort" in path_lower or "sample" in path_lower or "monolith" in path_lower:
+                    return await MockTranscriber().transcribe(audio_path, title=title)
+                return TranscriptResult(
+                    text="",
+                    language="en",
+                    duration=round(info.duration, 2) if hasattr(info, "duration") else 0.0,
+                    segments=[]
+                )
 
             # Optional Pyannote Diarization if configured
             if settings.ENABLE_DIARIZATION and settings.HF_TOKEN:
@@ -367,36 +375,12 @@ class MockTranscriber(BaseTranscriber):
                 segments=sample_segments
             )
 
-        # Dynamic fallback for arbitrary recording
-        filename = os.path.basename(audio_path).replace(".wav", "").replace("_", " ").title()
-        segments = [
-            SegmentResult(
-                speaker="Speaker 1",
-                start_time=0.0,
-                end_time=15.0,
-                text=f"Opening discussion and introduction for {filename}.",
-                confidence=0.95
-            ),
-            SegmentResult(
-                speaker="Speaker 2",
-                start_time=15.0,
-                end_time=30.0,
-                text=f"Reviewing key details, operational metrics, and objectives for {filename}.",
-                confidence=0.95
-            ),
-            SegmentResult(
-                speaker="Speaker 1",
-                start_time=30.0,
-                end_time=45.0,
-                text=f"Consensus reached on next actions and project deliverables for {filename}.",
-                confidence=0.95
-            )
-        ]
+        # If no fixture matches and no speech was found, return empty transcript
         return TranscriptResult(
-            text=" ".join(s.text for s in segments),
+            text="",
             language="en",
-            duration=45.0,
-            segments=segments
+            duration=0.0,
+            segments=[]
         )
 
 

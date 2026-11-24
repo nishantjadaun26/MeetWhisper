@@ -108,6 +108,17 @@ export default function App() {
 
   const handleGenerateArtifact = async (mode: 'flowchart' | 'notes') => {
     if (!currentMeeting) return;
+
+    const segmentCount = currentMeeting.transcript_segments?.length || 0;
+    if (segmentCount === 0) {
+      if (mode === 'flowchart') {
+        alert('Not enough content for a flowchart in this recording.');
+      } else {
+        alert('Not enough content to generate notes in this recording.');
+      }
+      return;
+    }
+
     setIsGeneratingArtifact(true);
 
     try {
@@ -125,7 +136,12 @@ export default function App() {
             }
           } else if (progress.status === 'failed') {
             setIsGeneratingArtifact(false);
-            alert(`Generation failed: ${progress.error_message || 'Unknown error'}`);
+            const err = progress.error_message || 'Unknown error';
+            if (err.toLowerCase().includes('not enough content')) {
+              alert('Not enough content for a flowchart in this recording.');
+            } else {
+              alert(`Generation failed: ${err}`);
+            }
           }
         },
         () => {
@@ -435,6 +451,7 @@ export default function App() {
                         <GraphCanvas
                           graph={currentMeeting.analysis?.graph_json || { nodes: [], edges: [] }}
                           graphType={currentMeeting.analysis?.graph_type}
+                          hasContent={(currentMeeting.transcript_segments?.length || 0) > 0}
                           onSeek={handleSeek}
                           onGenerateFlowchart={() => handleGenerateArtifact('flowchart')}
                           isGenerating={isGeneratingArtifact}
