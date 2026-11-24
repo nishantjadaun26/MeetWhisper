@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MeetWhisper — Audio & Video Speech Intelligence</title>
+  <meta name="description" content="MeetWhisper turns audio or video recordings into verified summaries, structured action notes, and validated decision flowcharts tied to exact timestamps.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* -------------------------------------------------------------------------
+       DESIGN TOKENS & RESET
+       Strict palette: #09090F, #F1EFFA, #B3AFCB, #C4B5FD, #67E8F9, #2E2B45
+       ------------------------------------------------------------------------- */
+    :root {
+      --bg: #09090F;
+      --text-primary: #F1EFFA;
+      --text-secondary: #B3AFCB;
+      --accent-violet: #C4B5FD;
+      --accent-cyan: #67E8F9;
+      --border: #2E2B45;
+      --subtle-fill: rgba(255, 255, 255, 0.03);
+      --sig-gradient: linear-gradient(90deg, #C4B5FD, #67E8F9);
+      
+      --font-sora: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background-color: var(--bg);
+      color: var(--text-primary);
+      font-family: var(--font-sora);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      font-size: 16px;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* -------------------------------------------------------------------------
+       HERO BACKGROUND EFFECTS
+       - Faint 32px grid in rgba(167, 139, 250, 0.07)
+       - Soft violet radial glow in top-right: rgba(167, 139, 250, 0.4)
+       - Soft cyan radial glow in bottom-left: rgba(34, 211, 238, 0.25)
+       ------------------------------------------------------------------------- */
+    .hero-bg-wrapper {
+      position: relative;
+      width: 100%;
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 88% 12%, rgba(167, 139, 250, 0.38) 0%, rgba(9, 9, 15, 0) 55%),
+        radial-gradient(circle at 10% 88%, rgba(34, 211, 238, 0.22) 0%, rgba(9, 9, 15, 0) 50%),
+        linear-gradient(to right, rgba(167, 139, 250, 0.07) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(167, 139, 250, 0.07) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+      background-position: 0 0, 0 0, 0 0, 0 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* -------------------------------------------------------------------------
+       STICKY NAV
+       ------------------------------------------------------------------------- */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(9, 9, 15, 0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 68px;
+    }
+
+    .nav-logo {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--accent-violet);
+      letter-spacing: -0.2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-logo-symbol {
+      color: var(--accent-violet);
+      font-size: 15px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .nav-links a {
+      transition: color 0.18s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--text-primary);
+    }
+
+    /* Mobile hamburger menu (if needed) */
+    .nav-mobile-toggle {
+      display: none;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px;
+      cursor: pointer;
+      color: var(--text-primary);
+    }
+
+    /* -------------------------------------------------------------------------
+       HERO SECTION
+       ------------------------------------------------------------------------- */
+    .hero {
+      padding: 72px 0 96px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 56px;
+      align-items: center;
+    }
+
+    .hero-content {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent-cyan);
+      background: rgba(103, 232, 249, 0.06);
+      border: 1px solid rgba(103, 232, 249, 0.35);
+      border-radius: 9999px;
+      padding: 6px 14px;
+      margin-bottom: 24px;
+      letter-spacing: 0.2px;
+    }
+
+    .badge-pill::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--accent-cyan);
+      display: inline-block;
+    }
+
+    .hero-headline {
+      font-size: 46px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -1px;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+    }
+
+    .gradient-text {
+      background: var(--sig-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline;
+    }
+
+    .hero-subtext {
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      max-width: 520px;
+      margin-bottom: 32px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+    }
+
+    .btn-gradient {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--sig-gradient);
+      color: #09090F;
+      font-family: var(--font-sora);
+      font-weight: 600;
+      font-size: 14px;
+      padding: 0 24px;
+      height: 46px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      transition: box-shadow 0.2s ease, filter 0.2s ease, transform 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn-gradient:hover {
+      filter: brightness(1.08);
+      box-shadow: 0 0 24px rgba(196, 181, 253, 0.45);
+      transform: translateY(-1px);
+    }
+
+    .btn-gradient:active {
+      transform: translateY(0);
+    }
+
+    .btn-mono-box {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--accent-violet);
+      background: var(--subtle-fill);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      height: 46px;
+      padding: 0 18px;
+      letter-spacing: 0.2px;
+      transition: border-color 0.2s ease, background 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-mono-box:hover {
+      border-color: var(--accent-violet);
+      background: rgba(196, 181, 253, 0.06);
+    }
+
+    /* -------------------------------------------------------------------------
+       HERO VISUAL MOCKUP (Static HTML/CSS)
+       ------------------------------------------------------------------------- */
+    .hero-visual {
+      width: 100%;
+      background: #09090F;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      position: relative;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65);
+      transition: border-color 0.2s ease;
+    }
+
+    .hero-visual:hover {
+      border-color: var(--accent-violet);
+    }
+
+    /* Waveform Header */
+    .mockup-player-bar {
+      background: var(--subtle-fill);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+
+    .mockup-player-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    .mockup-file-label {
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mockup-file-time {
+      color: var(--text-secondary);
+    }
+
+    /* Fake Waveform */
+    .mockup-waveform {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      height: 36px;
+      padding: 2px 0;
+      position: relative;
+    }
+
+    .wave-bar {
+      flex: 1;
+      background: var(--border);
+      border-radius: 2px;
+      height: 20%;
+    }
+
+    .wave-bar.active {
+      background: var(--accent-cyan);
+    }
+
+    .mockup-scrub-line {
+      position: absolute;
+      left: 36%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--accent-violet);
+      box-shadow: 0 0 8px rgba(196, 181, 253, 0.8);
+    }
+
+    /* Mockup Synced Panels */
+    .mockup-panels-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .mockup-card {
+      background: var(--subtle-fill);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      transition: border-color 0.2s ease;
+    }
+
+    .mockup-card-title {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Panel 1: Bullets */
+    .mockup-bullet-item {
+      font-size: 12px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      line-height: 1.4;
+    }
+
+    .mockup-bullet-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent-violet);
+      background: rgba(196, 181, 253, 0.08);
+      border: 1px solid rgba(196, 181, 253, 0.25);
+      border-radius: 4px;
+      padding: 1px 6px;
+      white-space: nowrap;
+    }
+
+    .mockup-timestamp-badge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent-cyan);
+      margin-left: auto;
+      white-space: nowrap;
+    }
+
+    /* Panel 2: Mini Flowchart */
+    .mockup-flowchart {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 0;
+    }
+
+    .flow-node {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      background: var(--subtle-fill);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+
+    .flow-node.active {
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      background: rgba(103, 232, 249, 0.06);
+    }
+
+    .flow-arrow {
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    /* Panel 3: Transcript Line */
+    .mockup-transcript-line {
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--text-primary);
+      background: rgba(103, 232, 249, 0.06);
+      border-left: 2px solid var(--accent-cyan);
+      padding: 6px 10px;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .mockup-speaker {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--accent-cyan);
+      display: inline-block;
+      margin-right: 6px;
+    }
+
+    /* -------------------------------------------------------------------------
+       SECTION COMMON STYLES
+       ------------------------------------------------------------------------- */
+    .section {
+      padding: 88px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-header {
+      margin-bottom: 48px;
+      max-width: 680px;
+    }
+
+    .section-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .section-title {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      color: var(--text-primary);
+      margin-bottom: 14px;
+    }
+
+    .section-subtitle {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* -------------------------------------------------------------------------
+       1. CHOOSE YOUR OUTPUT
+       ------------------------------------------------------------------------- */
+    .output-selector {
+      display: flex;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 4px;
+      gap: 4px;
+      max-width: 540px;
+      margin-bottom: 24px;
+    }
+
+    .output-tab-btn {
+      flex: 1;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-family: var(--font-sora);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .output-tab-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .output-tab-btn.active {
+      background: var(--subtle-fill);
+      border-color: var(--accent-violet);
+      color: var(--text-primary);
+      box-shadow: 0 0 16px rgba(196, 181, 253, 0.15);
+    }
+
+    .output-preview-card {
+      background: var(--subtle-fill);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      transition: border-color 0.2s ease;
+      min-height: 280px;
+    }
+
+    .output-preview-card:hover {
+      border-color: var(--accent-violet);
+    }
+
+    .output-panel {
+      display: none;
+    }
+
+    .output-panel.active {
+      display: block;
+    }
+
+    .output-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+    }
+
+    .output-panel-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .output-panel-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent-cyan);
+      border: 1px solid rgba(103, 232, 249, 0.3);
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    /* Structured Notes styling */
+    .notes-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .notes-section {
+      background: rgba(9, 9, 15, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .notes-section-title {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent-violet);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .notes-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .notes-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      line-height: 1.4;
+    }
+
+    .notes-item strong {
+      color: var(--text-primary);
+    }
+
+    .mono-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent-cyan);
+      white-space: nowrap;
+    }
+
+    /* Flowchart / Mind Map inside Output Selector */
+    .flowchart-canvas {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 10px 0;
+    }
+
+    .flow-chain {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .flow-box {
+      background: rgba(9, 9, 15, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .flow-box .node-category {
+      font-size: 10px;
+      color: var(--accent-violet);
+      text-transform: uppercase;
+    }
+
+    .flow-box .node-title {
+      font-size: 12px;
+      color: var(--text-primary);
+    }
+
+    .flow-edge-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* -------------------------------------------------------------------------
+       2. CLICK TO VERIFY (Interactive Demo)
+       ------------------------------------------------------------------------- */
+    .verify-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: center;
+    }
+
+    .verify-interactive-container {
+      background: var(--subtle-fill);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      transition: border-color 0.2s ease;
+    }
+
+    .verify-interactive-container:hover {
+      border-color: var(--accent-violet);
+    }
+
+    .verify-player-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-secondary);
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .verify-time-active {
+      color: var(--accent-cyan);
+      font-weight: 500;
+    }
+
+    .verify-bullets-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .verify-bullet-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(9, 9, 15, 0.7);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: var(--text-primary);
+      font-size: 13px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      width: 100%;
+    }
+
+    .verify-bullet-btn:hover {
+      border-color: var(--accent-violet);
+      background: rgba(196, 181, 253, 0.05);
+    }
+
+    .verify-bullet-btn.active {
+      border-color: var(--accent-cyan);
+      background: rgba(103, 232, 249, 0.08);
+    }
+
+    .verify-transcript-card {
+      background: rgba(9, 9, 15, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .verify-transcript-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .verify-transcript-output {
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 8px 12px;
+      border-left: 2px solid var(--accent-cyan);
+      background: rgba(103, 232, 249, 0.04);
+      border-radius: 0 6px 6px 0;
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+    }
+
+    /* -------------------------------------------------------------------------
+       3. HOW IT WORKS
+       ------------------------------------------------------------------------- */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .step-card {
+      background: var(--subtle-fill);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 24px;
+      position: relative;
+      transition: border-color 0.2s ease, transform 0.18s ease;
+    }
+
+    .step-card:hover {
+      border-color: var(--accent-violet);
+      transform: translateY(-2px);
+    }
+
+    .step-number {
+      font-family: var(--font-mono);
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--accent-violet);
+      margin-bottom: 16px;
+      display: block;
+      line-height: 1;
+    }
+
+    .step-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+
+    .step-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* -------------------------------------------------------------------------
+       4. BUILT DIFFERENT
+       ------------------------------------------------------------------------- */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--subtle-fill);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      transition: border-color 0.2s ease, transform 0.18s ease;
+    }
+
+    .feature-card:hover {
+      border-color: var(--accent-violet);
+      transform: translateY(-2px);
+    }
+
+    .feature-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: rgba(196, 181, 253, 0.08);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-violet);
+      margin-bottom: 20px;
+    }
+
+    .feature-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+
+    .feature-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* -------------------------------------------------------------------------
+       5. PRIVACY & FLEXIBILITY
+       ------------------------------------------------------------------------- */
+    .privacy-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: center;
+    }
+
+    .code-block {
+      background: #09090F;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text-primary);
+      overflow-x: auto;
+      transition: border-color 0.2s ease;
+    }
+
+    .code-block:hover {
+      border-color: var(--accent-violet);
+    }
+
+    .code-comment {
+      color: var(--text-secondary);
+      opacity: 0.75;
+    }
+
+    .code-var {
+      color: var(--accent-cyan);
+    }
+
+    .code-val {
+      color: var(--accent-violet);
+    }
+
+    /* -------------------------------------------------------------------------
+       6. MADE FOR (Chips)
+       ------------------------------------------------------------------------- */
+    .chips-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .chip-item {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-primary);
+      background: var(--subtle-fill);
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      padding: 8px 18px;
+      transition: all 0.18s ease;
+    }
+
+    .chip-item:hover {
+      border-color: var(--accent-violet);
+      color: var(--accent-violet);
+      background: rgba(196, 181, 253, 0.05);
+    }
+
+    /* -------------------------------------------------------------------------
+       7. FINAL CTA
+       ------------------------------------------------------------------------- */
+    .cta-card {
+      background: var(--subtle-fill);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 64px 32px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: border-color 0.2s ease;
+    }
+
+    .cta-card:hover {
+      border-color: var(--accent-violet);
+    }
+
+    .cta-headline {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--text-primary);
+      margin-bottom: 14px;
+      max-width: 600px;
+      line-height: 1.2;
+    }
+
+    .cta-subtext {
+      font-size: 15px;
+      color: var(--text-secondary);
+      margin-bottom: 28px;
+      max-width: 480px;
+    }
+
+    /* -------------------------------------------------------------------------
+       8. FOOTER
+       ------------------------------------------------------------------------- */
+    .footer {
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .footer-logo {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--accent-violet);
+    }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      list-style: none;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .footer-links a:hover {
+      color: var(--text-primary);
+    }
+
+    .footer-copy {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* -------------------------------------------------------------------------
+       RESPONSIVENESS (360px to 1440px)
+       ------------------------------------------------------------------------- */
+    @media (max-width: 992px) {
+      .hero {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        padding: 48px 0 64px;
+      }
+
+      .steps-grid,
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .verify-grid,
+      .privacy-grid {
+        grid-template-columns: 1fr;
+        gap: 28px;
+      }
+
+      .notes-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .hero-headline {
+        font-size: 32px;
+      }
+
+      .section-title {
+        font-size: 26px;
+      }
+
+      .cta-headline {
+        font-size: 26px;
+      }
+
+      .output-selector {
+        flex-direction: column;
+      }
+
+      .hero-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn-gradient,
+      .btn-mono-box {
+        width: 100%;
+        text-align: center;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .footer-inner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    /* -------------------------------------------------------------------------
+       REDUCED MOTION
+       ------------------------------------------------------------------------- */
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- =========================================================================
+       STICKY NAVIGATION
+       ========================================================================= -->
+  <header class="nav">
+    <div class="container nav-inner">
+      <a href="#" class="nav-logo">
+        <span class="nav-logo-symbol">◆</span> MeetWhisper
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how-it-works">How it works</a></li>
+          <li><a href="#privacy">Privacy</a></li>
+          <li><a href="https://github.com/nishantjadaun26/MeetWhisper" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       HERO SECTION WITH BACKGROUND EFFECTS
+       ========================================================================= -->
+  <div class="hero-bg-wrapper">
+    <div class="container">
+      <section class="hero">
+        <!-- Hero Left Column -->
+        <div class="hero-content">
+          <div class="badge-pill">
+            Audio + Video supported
+          </div>
+          <h1 class="hero-headline">
+            Don't just summarize meetings. <span class="gradient-text">Verify them.</span>
+          </h1>
+          <p class="hero-subtext">
+            Upload any recording and get action items, decision flowcharts or mind maps. Every point is linked to the exact moment it was said.
+          </p>
+          <div class="hero-actions">
+            <button class="btn-gradient" onclick="document.getElementById('outputs').scrollIntoView({ behavior: 'smooth' })">
+              Try MeetWhisper
+            </button>
+            <div class="btn-mono-box">
+              Upload .mp3 · .wav · .mp4 · .mov
+            </div>
+          </div>
+        </div>
+
+        <!-- Hero Right Column: Static Product Mockup -->
+        <div class="hero-visual" aria-label="MeetWhisper synchronized interface mockup">
+          <!-- Audio/Video Waveform Player Mockup -->
+          <div class="mockup-player-bar">
+            <div class="mockup-player-meta">
+              <span class="mockup-file-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                [RECORDING_FILENAME.mp4]
+              </span>
+              <span class="mockup-file-time">[12:04 / 48:15]</span>
+            </div>
+            <div class="mockup-waveform">
+              <div class="wave-bar active" style="height: 35%"></div>
+              <div class="wave-bar active" style="height: 65%"></div>
+              <div class="wave-bar active" style="height: 90%"></div>
+              <div class="wave-bar active" style="height: 40%"></div>
+              <div class="wave-bar active" style="height: 75%"></div>
+              <div class="wave-bar active" style="height: 50%"></div>
+              <div class="wave-bar active" style="height: 85%"></div>
+              <div class="wave-bar active" style="height: 30%"></div>
+              <div class="wave-bar active" style="height: 70%"></div>
+              <div class="wave-bar active" style="height: 95%"></div>
+              <div class="wave-bar" style="height: 45%"></div>
+              <div class="wave-bar" style="height: 60%"></div>
+              <div class="wave-bar" style="height: 80%"></div>
+              <div class="wave-bar" style="height: 40%"></div>
+              <div class="wave-bar" style="height: 65%"></div>
+              <div class="wave-bar" style="height: 90%"></div>
+              <div class="wave-bar" style="height: 35%"></div>
+              <div class="wave-bar" style="height: 75%"></div>
+              <div class="wave-bar" style="height: 50%"></div>
+              <div class="wave-bar" style="height: 40%"></div>
+              <div class="mockup-scrub-line"></div>
+            </div>
+          </div>
+
+          <!-- 3 Synced Mockup Panels -->
+          <div class="mockup-panels-grid">
+            <!-- Panel 1: Bullets / Action Item -->
+            <div class="mockup-card">
+              <div class="mockup-card-title">
+                <span>Structured Extraction</span>
+                <span class="mockup-timestamp-badge">[12:04]</span>
+              </div>
+              <div class="mockup-bullet-item">
+                <span class="mockup-bullet-tag">Action</span>
+                <span>Action item: [OWNER] to [TASK] by [DATE]</span>
+              </div>
+            </div>
+
+            <!-- Panel 2: Mini Flowchart -->
+            <div class="mockup-card">
+              <div class="mockup-card-title">
+                <span>Decision Flow</span>
+                <span class="mockup-timestamp-badge">[VERIFIED]</span>
+              </div>
+              <div class="mockup-flowchart">
+                <div class="flow-node">[Problem]</div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-node">[Options]</div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-node active">[Decision]</div>
+              </div>
+            </div>
+
+            <!-- Panel 3: Synced Transcript Line -->
+            <div class="mockup-card">
+              <div class="mockup-card-title">
+                <span>Grounded Transcript</span>
+                <span class="mockup-timestamp-badge">[12:04]</span>
+              </div>
+              <div class="mockup-transcript-line">
+                <span class="mockup-speaker">[SPEAKER_A]:</span>
+                "Agreed. Let's make an explicit decision: [OWNER] will standardize the architecture and finalize models by [DATE]."
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       SECTION 1: CHOOSE YOUR OUTPUT
+       ========================================================================= -->
+  <section class="section" id="outputs">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-eyebrow">Outputs</span>
+        <h2 class="section-title">Choose your output</h2>
+        <p class="section-subtitle">
+          Don't settle for one-size-fits-all text blobs. Select the exact structured format tailored for your cognitive workflow.
+        </p>
+      </div>
+
+      <!-- Segmented Selector -->
+      <div class="output-selector" role="tablist" aria-label="Output format options">
+        <button class="output-tab-btn active" role="tab" aria-selected="true" data-target="panel-summary" onclick="switchOutputTab('panel-summary', this)">
+          Summary
+        </button>
+        <button class="output-tab-btn" role="tab" aria-selected="false" data-target="panel-notes" onclick="switchOutputTab('panel-notes', this)">
+          Notes
+        </button>
+        <button class="output-tab-btn" role="tab" aria-selected="false" data-target="panel-flowchart" onclick="switchOutputTab('panel-flowchart', this)">
+          Flowchart / Mind Map
+        </button>
+      </div>
+
+      <!-- Preview Cards -->
+      <div class="output-preview-card">
+        <!-- Panel 1: Summary -->
+        <div id="panel-summary" class="output-panel active">
+          <div class="output-panel-header">
+            <h3 class="output-panel-title">Executive Overview</h3>
+            <span class="output-panel-tag">[EXECUTIVE_SUMMARY]</span>
+          </div>
+          <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.7; margin-bottom: 16px;">
+            The discussion focused on evaluating architecture migration options between [OPTION_A] and [OPTION_B]. Key latency benchmarks confirmed that [OPTION_A] delivers sub-12ms response times while reducing operational overhead. The team agreed on staging deployment milestones and assigned failover drills for [UPCOMING_SPRINT].
+          </p>
+          <div style="display: flex; gap: 10px; font-family: var(--font-mono); font-size: 11px; color: var(--accent-cyan);">
+            <span>• 3 Key Decisions</span>
+            <span>• 2 Action Items</span>
+            <span>• 1 Open Question</span>
+          </div>
+        </div>
+
+        <!-- Panel 2: Notes -->
+        <div id="panel-notes" class="output-panel">
+          <div class="output-panel-header">
+            <h3 class="output-panel-title">Structured Meeting Notes</h3>
+            <span class="output-panel-tag">[STRUCTURED_NOTES]</span>
+          </div>
+          <div class="notes-grid">
+            <!-- Decisions Made -->
+            <div class="notes-section">
+              <h4 class="notes-section-title">Decisions Made</h4>
+              <ul class="notes-list">
+                <li class="notes-item">
+                  <span><strong>Standardize architecture:</strong> Adopt [OPTION_A] for primary storage partition.</span>
+                  <span class="mono-tag">[18:24]</span>
+                </li>
+                <li class="notes-item">
+                  <span><strong>Release cadence:</strong> Schedule bi-weekly staging validation drills.</span>
+                  <span class="mono-tag">[34:10]</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Action Items -->
+            <div class="notes-section">
+              <h4 class="notes-section-title">Action Items</h4>
+              <ul class="notes-list">
+                <li class="notes-item">
+                  <span><strong>[OWNER_A]:</strong> Configure automated WAL shipping to cloud bucket by [DATE].</span>
+                  <span class="mono-tag">[36:50]</span>
+                </li>
+                <li class="notes-item">
+                  <span><strong>[OWNER_B]:</strong> Finalize schema migration scripts and commit baseline models.</span>
+                  <span class="mono-tag">[48:15]</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Open Questions -->
+            <div class="notes-section">
+              <h4 class="notes-section-title">Open Questions</h4>
+              <ul class="notes-list">
+                <li class="notes-item">
+                  <span>What is the disaster recovery RPO for cross-region streaming replication in [REGION]?</span>
+                  <span class="mono-tag">[25:30]</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Topic Segments -->
+            <div class="notes-section">
+              <h4 class="notes-section-title">Topic Segments</h4>
+              <ul class="notes-list">
+                <li class="notes-item">
+                  <span>01. Architecture & Benchmark Review</span>
+                  <span class="mono-tag">[00:00 - 18:20]</span>
+                </li>
+                <li class="notes-item">
+                  <span>02. Disaster Recovery & Failover Logistics</span>
+                  <span class="mono-tag">[18:21 - 48:15]</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 3: Flowchart / Mind Map -->
+        <div id="panel-flowchart" class="output-panel">
+          <div class="output-panel-header">
+            <h3 class="output-panel-title">Decision Flowchart & Concept Mind Map</h3>
+            <span class="output-panel-tag">[VALIDATED_GRAPH]</span>
+          </div>
+          <div class="flowchart-canvas">
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
+              Decision Flowchart for meetings and debates (problem → options → trade-offs → decision), and Concept Mind Maps for lectures and podcasts:
+            </p>
+            <div class="flow-chain">
+              <div class="flow-box">
+                <span class="node-category">Problem</span>
+                <span class="node-title">[Storage scalability bottleneck]</span>
+              </div>
+              <span class="flow-edge-label">leads to →</span>
+              <div class="flow-box">
+                <span class="node-category">Options</span>
+                <span class="node-title">[Compare Option A vs Option B]</span>
+              </div>
+              <span class="flow-edge-label">evaluates →</span>
+              <div class="flow-box">
+                <span class="node-category">Trade-offs</span>
+                <span class="node-title">[12ms p99 vs Operational overhead]</span>
+              </div>
+              <span class="flow-edge-label">justifies →</span>
+              <div class="flow-box" style="border-color: var(--accent-cyan); background: rgba(103, 232, 249, 0.05);">
+                <span class="node-category" style="color: var(--accent-cyan);">Decision</span>
+                <span class="node-title" style="color: var(--accent-cyan);">[Standardize on Option A]</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SECTION 2: CLICK TO VERIFY (Interactive Demo)
+       ========================================================================= -->
+  <section class="section">
+    <div class="container">
+      <div class="verify-grid">
+        <!-- Explanation Left -->
+        <div>
+          <span class="section-eyebrow">Zero Hallucinations</span>
+          <h2 class="section-title">Click to verify</h2>
+          <p class="section-subtitle" style="margin-bottom: 20px;">
+            Every bullet, action item and diagram node is strictly tied to its <span style="font-family: var(--font-mono); color: var(--accent-cyan);">[mm:ss]</span> timestamp and speaker label.
+          </p>
+          <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;">
+            Never wonder whether the AI hallucinated an agreement. Clicking any extracted point jumps the audio or video directly to that exact second and lights up the speaker-diarized transcript line for instant verification.
+          </p>
+        </div>
+
+        <!-- Interactive Demo Right -->
+        <div class="verify-interactive-container">
+          <div class="verify-player-status">
+            <span>Audio scrub position:</span>
+            <span class="verify-time-active" id="demo-time-display">[18:24]</span>
+          </div>
+
+          <div style="margin-bottom: 12px; font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary);">
+            Click an extracted point to seek & highlight:
+          </div>
+
+          <div class="verify-bullets-list">
+            <button class="verify-bullet-btn active" id="demo-btn-1" onclick="runVerifyDemo(1, '18:24', '[SPEAKER_A]', 'Agreed. Let\'s make an explicit decision: we will standardize on PostgreSQL 16 with pgvector for our vector embeddings.')">
+              <span>Decision: [Standardize on Option A for vector storage]</span>
+              <span class="mono-tag">[18:24]</span>
+            </button>
+            <button class="verify-bullet-btn" id="demo-btn-2" onclick="runVerifyDemo(2, '36:50', '[SPEAKER_B]', 'For action items, I will configure the automated WAL shipping to S3 and document the failover drill by this Thursday.')">
+              <span>Action: [OWNER] to configure WAL shipping to bucket</span>
+              <span class="mono-tag">[36:50]</span>
+            </button>
+            <button class="verify-bullet-btn" id="demo-btn-3" onclick="runVerifyDemo(3, '25:30', '[SPEAKER_C]', 'I have an open question: what is our disaster recovery RPO for the streaming replication replicas in us-west-2?')">
+              <span>Question: [Disaster recovery RPO in target region?]</span>
+              <span class="mono-tag">[25:30]</span>
+            </button>
+          </div>
+
+          <div class="verify-transcript-card">
+            <div class="verify-transcript-label">Grounded Transcript Line:</div>
+            <div class="verify-transcript-output" id="demo-transcript-output">
+              <span style="font-family: var(--font-mono); color: var(--accent-cyan); font-weight: 500;" id="demo-speaker-output">[SPEAKER_A]:</span>
+              <span id="demo-text-output">"Agreed. Let's make an explicit decision: we will standardize on PostgreSQL 16 with pgvector for our vector embeddings."</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SECTION 3: HOW IT WORKS
+       ========================================================================= -->
+  <section class="section" id="how-it-works">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-eyebrow">Pipeline</span>
+        <h2 class="section-title">How it works</h2>
+        <p class="section-subtitle">
+          Three precise stages turn raw audio or video files into validated intelligence without human bottleneck.
+        </p>
+      </div>
+
+      <div class="steps-grid">
+        <!-- Step 1 -->
+        <div class="step-card">
+          <span class="step-number">01</span>
+          <h3 class="step-title">Upload audio or video</h3>
+          <p class="step-desc">
+            Drop in your meeting, lecture, podcast, or screen recording in <span style="font-family: var(--font-mono); color: var(--accent-cyan);">.mp3, .wav, .mp4, .webm,</span> or <span style="font-family: var(--font-mono); color: var(--accent-cyan);">.mov</span>. The pipeline normalizes audio to 16kHz mono WAV for high-fidelity speech recognition.
+          </p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step-card">
+          <span class="step-number">02</span>
+          <h3 class="step-title">Speaker-aware transcription and topic segmentation</h3>
+          <p class="step-desc">
+            Faster-Whisper transcribes words with word-level timestamps. Semantic embeddings detect natural topical transitions before feeding structured context to the extraction model.
+          </p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step-card">
+          <span class="step-number">03</span>
+          <h3 class="step-title">Get your chosen output with timestamp links</h3>
+          <p class="step-desc">
+            Receive your verified summary notes or validated interactive flowchart. Every item is clickable and directly tied to the exact second in the audio or video recording.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SECTION 4: BUILT DIFFERENT
+       ========================================================================= -->
+  <section class="section" id="features">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-eyebrow">Architecture</span>
+        <h2 class="section-title">Built different</h2>
+        <p class="section-subtitle">
+          Engineered from the ground up for rigor, acoustic precision, and graph validity.
+        </p>
+      </div>
+
+      <div class="features-grid">
+        <!-- Card 1 -->
+        <div class="feature-card">
+          <div class="feature-icon-box">
+            <!-- Inline SVG: Speech Wave / ML -->
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v20M17 5v14M7 5v14M2 9v6M22 9v6"></path>
+            </svg>
+          </div>
+          <h3 class="feature-title">Real speech ML, not just an LLM wrapper</h3>
+          <p class="feature-desc">
+            Speaker-diarized transcription, plus semantic topic segmentation before the AI extraction step ensures contextual fidelity and preserves speaker attribution.
+          </p>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="feature-card">
+          <div class="feature-icon-box">
+            <!-- Inline SVG: Graph Nodes / Flowchart -->
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="6" height="6" rx="1"></rect>
+              <rect x="15" y="3" width="6" height="6" rx="1"></rect>
+              <rect x="9" y="15" width="6" height="6" rx="1"></rect>
+              <path d="M6 9v3a3 3 0 0 0 3 3h3"></path>
+              <path d="M18 9v3a3 3 0 0 1-3 3h-3"></path>
+            </svg>
+          </div>
+          <h3 class="feature-title">Diagrams that never break</h3>
+          <p class="feature-desc">
+            Flowcharts are checked by an automated deterministic graph validator before they are shown. Dangling references and disconnected cycles are repaired automatically.
+          </p>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="feature-card">
+          <div class="feature-icon-box">
+            <!-- Inline SVG: Search / Database -->
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </div>
+          <h3 class="feature-title">Search across all your past meetings and lectures</h3>
+          <p class="feature-desc">
+            pgvector semantic embeddings allow natural-language querying across your entire repository of conversations, retrieving the exact timestamped discussion in milliseconds.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SECTION 5: PRIVACY & FLEXIBILITY
+       ========================================================================= -->
+  <section class="section" id="privacy">
+    <div class="container">
+      <div class="privacy-grid">
+        <div>
+          <span class="section-eyebrow">Security & Control</span>
+          <h2 class="section-title">Privacy and flexibility</h2>
+          <p class="section-subtitle" style="margin-bottom: 20px;">
+            Choose cloud mode or local-first mode, where everything runs on your own machine, switchable by setting.
+          </p>
+          <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;">
+            Keep sensitive executive sessions, intellectual property, and proprietary recordings entirely on-premise with local whisper inference and self-hosted models.
+          </p>
+        </div>
+
+        <div>
+          <div class="code-block" aria-label="Environment configuration snippet">
+            <span class="code-comment"># MeetWhisper Local-First Privacy Configuration</span><br>
+            <span class="code-var">MODE</span>=<span class="code-val">local</span><br>
+            <span class="code-var">TRANSCRIBER_ENGINE</span>=<span class="code-val">faster_whisper</span><br>
+            <span class="code-var">WHISPER_DEVICE</span>=<span class="code-val">cpu</span><br>
+            <span class="code-var">LLM_PROVIDER</span>=<span class="code-val">ollama</span><br>
+            <span class="code-var">OLLAMA_MODEL</span>=<span class="code-val">llama3.2</span><br>
+            <span class="code-var">DATABASE_URL</span>=<span class="code-val">sqlite+aiosqlite:///local.db</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SECTION 6: MADE FOR
+       ========================================================================= -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header" style="margin-bottom: 28px;">
+        <span class="section-eyebrow">Versatility</span>
+        <h2 class="section-title">Made for</h2>
+        <p class="section-subtitle">
+          Engineered for fast-paced knowledge work across conversations and educational recordings.
+        </p>
+      </div>
+
+      <div class="chips-wrapper">
+        <span class="chip-item">Standups and sprint planning</span>
+        <span class="chip-item">Architecture reviews</span>
+        <span class="chip-item">College lectures</span>
+        <span class="chip-item">Interviews</span>
+        <span class="chip-item">Podcasts</span>
+        <span class="chip-item">Research discussions</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SECTION 7: FINAL CALL TO ACTION
+       ========================================================================= -->
+  <section class="section" style="border-bottom: none;">
+    <div class="container">
+      <div class="cta-card">
+        <h2 class="cta-headline">Don't trust the AI blindly. Verify every insight.</h2>
+        <p class="cta-subtext">
+          Upload any audio or video recording and inspect timestamp-grounded summaries, action items, and validated decision flowcharts.
+        </p>
+        <button class="btn-gradient" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })">
+          Try MeetWhisper
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SECTION 8: FOOTER
+       ========================================================================= -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-logo">
+        ◆ MeetWhisper
+      </div>
+      <ul class="footer-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#how-it-works">How it works</a></li>
+        <li><a href="#privacy">Privacy</a></li>
+        <li><a href="https://github.com/nishantjadaun26/MeetWhisper" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+      </ul>
+      <div class="footer-copy">
+        [VERIFIED_SPEECH_INTELLIGENCE]
+      </div>
+    </div>
+  </footer>
+
+  <!-- =========================================================================
+       INTERACTIVE JAVASCRIPT
+       - Output switcher (Summary, Notes, Flowchart)
+       - Click to verify demo (interactive timestamp scrubbing & transcript sync)
+       ========================================================================= -->
+  <script>
+    // 1. Output Segmented Selector
+    function switchOutputTab(panelId, btnElement) {
+      // Deactivate all buttons
+      const buttons = document.querySelectorAll('.output-tab-btn');
+      buttons.forEach(btn => {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-selected', 'false');
+      });
+
+      // Deactivate all panels
+      const panels = document.querySelectorAll('.output-panel');
+      panels.forEach(p => p.classList.remove('active'));
+
+      // Activate selected
+      btnElement.classList.add('active');
+      btnElement.setAttribute('aria-selected', 'true');
+
+      const targetPanel = document.getElementById(panelId);
+      if (targetPanel) {
+        targetPanel.classList.add('active');
+      }
+    }
+
+    // 2. Click-to-Verify Interactive Demo
+    function runVerifyDemo(index, timestamp, speaker, text) {
+      // Toggle button active state
+      for (let i = 1; i <= 3; i++) {
+        const btn = document.getElementById('demo-btn-' + i);
+        if (btn) {
+          if (i === index) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        }
+      }
+
+      // Update scrub position time display
+      const timeDisplay = document.getElementById('demo-time-display');
+      if (timeDisplay) {
+        timeDisplay.textContent = '[' + timestamp + ']';
+      }
+
+      // Update transcript line with flash highlight
+      const speakerDisplay = document.getElementById('demo-speaker-output');
+      const textDisplay = document.getElementById('demo-text-output');
+      const cardDisplay = document.getElementById('demo-transcript-output');
+
+      if (speakerDisplay) speakerDisplay.textContent = speaker + ':';
+      if (textDisplay) textDisplay.textContent = ' "' + text + '"';
+
+      if (cardDisplay) {
+        cardDisplay.style.backgroundColor = 'rgba(103, 232, 249, 0.18)';
+        setTimeout(() => {
+          cardDisplay.style.backgroundColor = 'rgba(103, 232, 249, 0.04)';
+        }, 300);
+      }
+    }
+  </script>
+</body>
+</html>
