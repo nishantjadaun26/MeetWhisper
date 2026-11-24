@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import {
   Play,
   Pause,
@@ -145,7 +145,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
     return (
       <div
         ref={containerRef}
-        className="group relative flex flex-col overflow-hidden rounded-xl border border-white/[0.06] bg-[#0c0e14]"
+        className="group relative flex flex-col overflow-hidden rounded-xl border border-[#2E2B45] bg-[#09090F]"
       >
         {/* Video Canvas */}
         <div
@@ -166,16 +166,16 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
 
           {/* Quick Play/Pause Overlay indicator on hover or pause */}
           {!isPlaying && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[1px]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white shadow-lg backdrop-blur-md transition hover:scale-110 hover:bg-white/20">
-                <Play className="ml-0.5 h-5 w-5 fill-white" />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[1px]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-[#F1EFFA] shadow-lg backdrop-blur-md transition hover:scale-110 hover:bg-white/20">
+                <Play className="ml-0.5 h-5 w-5 fill-[#F1EFFA]" />
               </div>
             </div>
           )}
         </div>
 
         {/* Video Controls Bar */}
-        <div className="flex flex-col space-y-2 p-3 bg-[#0c0e14]">
+        <div className="flex flex-col space-y-2 p-3 bg-[#09090F] border-t border-[#2E2B45]">
           {/* Progress Slider */}
           <div className="relative flex items-center">
             <input
@@ -185,9 +185,9 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
               step={0.1}
               value={currentTime}
               onChange={handleSeek}
-              className="h-1 w-full cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-sky-400 focus:outline-none"
+              className="h-1 w-full cursor-pointer appearance-none rounded-full bg-[#2E2B45] accent-[#67E8F9] focus:outline-none"
               style={{
-                background: `linear-gradient(to right, #38bdf8 ${progressPercent}%, rgba(255,255,255,0.08) ${progressPercent}%)`,
+                background: `linear-gradient(to right, #67E8F9 ${progressPercent}%, #2E2B45 ${progressPercent}%)`,
               }}
             />
           </div>
@@ -198,34 +198,34 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
               <button
                 onClick={() => handleSkip(-5)}
                 title="Rewind 5s"
-                className="rounded p-1 text-zinc-400 hover:text-white transition"
+                className="rounded p-1 text-[#B3AFCB] hover:text-[#F1EFFA] transition"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
               </button>
 
               <button
                 onClick={togglePlayPause}
-                className="flex h-7 w-7 items-center justify-center rounded-md bg-white/[0.08] text-white hover:bg-white/[0.15] transition active:scale-95"
+                className="flex h-7 w-7 items-center justify-center rounded-md bg-white/[0.06] text-[#F1EFFA] hover:bg-white/[0.12] transition active:scale-95 border border-[#2E2B45]"
               >
                 {isPlaying ? (
                   <Pause className="h-3.5 w-3.5" />
                 ) : (
-                  <Play className="ml-0.5 h-3.5 w-3.5 fill-white" />
+                  <Play className="ml-0.5 h-3.5 w-3.5 fill-[#F1EFFA]" />
                 )}
               </button>
 
               <button
                 onClick={() => handleSkip(5)}
                 title="Forward 5s"
-                className="rounded p-1 text-zinc-400 hover:text-white transition"
+                className="rounded p-1 text-[#B3AFCB] hover:text-[#F1EFFA] transition"
               >
                 <RotateCw className="h-3.5 w-3.5" />
               </button>
 
               {/* Time Indicator */}
-              <div className="ml-2 font-mono text-[11px] text-zinc-400">
-                <span className="text-zinc-200">{formatTime(currentTime)}</span>
-                <span className="text-zinc-600 mx-1">/</span>
+              <div className="ml-2 font-mono text-[11px] text-[#B3AFCB]">
+                <span className="text-[#67E8F9] font-medium">{formatTime(currentTime)}</span>
+                <span className="text-[#2E2B45] mx-1">/</span>
                 <span>{formatTime(duration)}</span>
               </div>
             </div>
@@ -235,7 +235,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
               {/* Playback Speed Pill */}
               <button
                 onClick={handleSpeedChange}
-                className="rounded border border-white/[0.06] bg-white/[0.02] px-1.5 py-0.5 font-mono text-[10px] text-zinc-400 hover:text-white hover:border-white/[0.12] transition"
+                className="rounded border border-[#2E2B45] bg-white/[0.02] px-1.5 py-0.5 font-mono text-[10px] text-[#C4B5FD] hover:text-[#F1EFFA] hover:border-[#C4B5FD] transition"
               >
                 {playbackRate}x
               </button>
@@ -244,7 +244,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
               <div className="flex items-center space-x-1.5">
                 <button
                   onClick={toggleMute}
-                  className="rounded p-1 text-zinc-400 hover:text-white transition"
+                  className="rounded p-1 text-[#B3AFCB] hover:text-[#F1EFFA] transition"
                 >
                   {isMuted || volume === 0 ? (
                     <VolumeX className="h-3.5 w-3.5" />
@@ -259,7 +259,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
                   step={0.05}
                   value={isMuted ? 0 : volume}
                   onChange={handleVolumeChange}
-                  className="h-1 w-14 cursor-pointer appearance-none rounded-full bg-white/[0.08] accent-sky-400 focus:outline-none"
+                  className="h-1 w-14 cursor-pointer appearance-none rounded-full bg-[#2E2B45] accent-[#67E8F9] focus:outline-none"
                 />
               </div>
 
@@ -267,7 +267,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
               <button
                 onClick={toggleFullscreen}
                 title="Toggle Fullscreen"
-                className="rounded p-1 text-zinc-400 hover:text-white transition"
+                className="rounded p-1 text-[#B3AFCB] hover:text-[#F1EFFA] transition"
               >
                 <Maximize2 className="h-3.5 w-3.5" />
               </button>

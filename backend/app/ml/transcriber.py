@@ -147,10 +147,10 @@ class FasterWhisperTranscriber(BaseTranscriber):
 
 
 class GroqWhisperTranscriber(BaseTranscriber):
-    async def transcribe(self, audio_path: str) -> TranscriptResult:
+    async def transcribe(self, audio_path: str, title: Optional[str] = None) -> TranscriptResult:
         if not settings.GROQ_API_KEY:
             logger.warning("GROQ_API_KEY missing; falling back to MockTranscriber")
-            return await MockTranscriber().transcribe(audio_path)
+            return await MockTranscriber().transcribe(audio_path, title=title)
 
         url = "https://api.groq.com/openai/v1/audio/transcriptions"
         headers = {"Authorization": f"Bearer {settings.GROQ_API_KEY}"}
@@ -188,10 +188,10 @@ class GroqWhisperTranscriber(BaseTranscriber):
 
 
 class DeepgramTranscriber(BaseTranscriber):
-    async def transcribe(self, audio_path: str) -> TranscriptResult:
+    async def transcribe(self, audio_path: str, title: Optional[str] = None) -> TranscriptResult:
         if not settings.DEEPGRAM_API_KEY:
             logger.warning("DEEPGRAM_API_KEY missing; falling back to MockTranscriber")
-            return await MockTranscriber().transcribe(audio_path)
+            return await MockTranscriber().transcribe(audio_path, title=title)
 
         url = "https://api.deepgram.com/v1/listen?diarize=true&punctuate=true&utterances=true"
         headers = {
@@ -272,8 +272,8 @@ class MockTranscriber(BaseTranscriber):
     """
     Intelligent context-aware transcript generator for offline and testing mode.
     """
-    async def transcribe(self, audio_path: str) -> TranscriptResult:
-        path_lower = audio_path.lower()
+    async def transcribe(self, audio_path: str, title: Optional[str] = None) -> TranscriptResult:
+        path_lower = (audio_path + " " + (title or "")).lower()
 
         # Selection sort video or similar algorithm video
         if "selection" in path_lower or "sort" in path_lower:

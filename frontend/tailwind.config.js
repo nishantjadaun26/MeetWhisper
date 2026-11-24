@@ -8,17 +8,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        slate: {
-          850: '#151f32',
-          900: '#0f172a',
-          950: '#020617',
-        },
-        cyan: {
-          400: '#22d3ee',
-          500: '#06b6d4',
-          600: '#0891b2',
-        }
-      }
+        bg: '#09090F',
+        textPrimary: '#F1EFFA',
+        textSecondary: '#B3AFCB',
+        accentViolet: '#C4B5FD',
+        accentCyan: '#67E8F9',
+        borderCustom: '#2E2B45',
+      },
+      fontFamily: {
+        sans: ['Sora', 'system-ui', 'sans-serif'],
+        mono: ['IBM Plex Mono', 'monospace'],
+      },
     },
   },
   plugins: [],

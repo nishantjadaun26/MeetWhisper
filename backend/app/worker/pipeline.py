@@ -91,7 +91,7 @@ async def execute_processing_pipeline(job_id: str, meeting_id: str, output_mode:
             await update_job_stage(job_id, "transcribing", 45, "Transcribing speech and diarizing speakers...")
             from app.ml.transcriber import get_transcriber
             transcriber = get_transcriber()
-            transcript_result = await transcriber.transcribe(normalized_path)
+            transcript_result = await transcriber.transcribe(normalized_path, title=meeting.title)
 
             async with AsyncSessionLocal() as db:
                 for idx, seg in enumerate(transcript_result.segments):

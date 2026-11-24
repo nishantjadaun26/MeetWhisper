@@ -40,18 +40,18 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
   if (!hasNotes) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center animate-fade">
-        <div className="h-10 w-10 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-400 mb-3">
-          <FileText className="h-5 w-5 text-sky-400" />
+        <div className="h-10 w-10 rounded-full bg-white/[0.04] border border-[#2E2B45] flex items-center justify-center text-[#B3AFCB] mb-3">
+          <FileText className="h-5 w-5 text-[#67E8F9]" />
         </div>
-        <h3 className="text-xs font-semibold text-zinc-200 mb-1">Notes & Summary Not Generated</h3>
-        <p className="text-[11px] text-zinc-500 max-w-xs mb-4">
+        <h3 className="text-xs font-semibold text-[#F1EFFA] mb-1">Notes & Summary Not Generated</h3>
+        <p className="text-[11px] text-[#B3AFCB] max-w-xs mb-4">
           You chose Flowchart Only during upload. You can generate executive summary, decisions, and action items on demand.
         </p>
         {onGenerateNotes && (
           <button
             onClick={onGenerateNotes}
             disabled={isGenerating}
-            className="flex items-center space-x-1.5 rounded-lg border border-sky-500/30 bg-sky-500/10 px-3.5 py-1.5 text-xs font-medium text-sky-300 hover:bg-sky-500/20 transition active:scale-95 disabled:opacity-50"
+            className="flex items-center space-x-1.5 rounded-lg border border-[#67E8F9]/30 bg-[#67E8F9]/10 px-3.5 py-1.5 text-xs font-medium text-[#67E8F9] hover:bg-[#67E8F9]/20 transition active:scale-95 disabled:opacity-50"
           >
             {isGenerating ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -66,14 +66,19 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto space-y-6 pr-2 animate-slide-up">
+    <div className="flex-1 overflow-y-auto space-y-5 pr-2 animate-slide-up">
       {/* Executive Summary */}
       {analysis.executive_summary && (
-        <section className="rounded-xl border border-white/[0.06] bg-[#0c0e14] p-4">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-2">
-            Overview
-          </h3>
-          <p className="text-xs leading-relaxed text-zinc-300">
+        <section className="rounded-xl border border-[#2E2B45] bg-[#09090F] p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#C4B5FD]">
+              Overview
+            </h3>
+            <span className="font-mono text-[10px] text-[#67E8F9] border border-[#67E8F9]/30 px-1.5 py-0.5 rounded">
+              VERIFIED
+            </span>
+          </div>
+          <p className="text-xs leading-relaxed text-[#B3AFCB]">
             {analysis.executive_summary}
           </p>
         </section>
@@ -83,7 +88,7 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
       {analysis.decisions_json && analysis.decisions_json.length > 0 && (
         <section className="space-y-2">
           <div className="flex items-center justify-between px-1">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+            <h3 className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#C4B5FD]">
               Decisions ({analysis.decisions_json.length})
             </h3>
           </div>
@@ -93,10 +98,10 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
               <div
                 key={idx}
                 onClick={() => onSeek(d.timestamp_start)}
-                className="group cursor-pointer rounded-lg border border-white/[0.05] bg-[#0c0e14] p-3 transition-all duration-150 hover:border-white/[0.12] hover:bg-white/[0.02]"
+                className="group cursor-pointer rounded-lg border border-[#2E2B45] bg-[#09090F] p-3 transition-all duration-150 hover:border-[#C4B5FD] hover:bg-white/[0.02]"
               >
                 <div className="flex items-start justify-between">
-                  <span className="text-xs font-medium text-zinc-200 group-hover:text-white transition">
+                  <span className="text-xs font-medium text-[#F1EFFA] group-hover:text-white transition">
                     {d.statement}
                   </span>
                   <button
@@ -104,20 +109,20 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
                       e.stopPropagation();
                       onSeek(d.timestamp_start);
                     }}
-                    className="flex shrink-0 ml-3 items-center space-x-1 font-mono text-[10px] text-zinc-500 hover:text-sky-400"
-                    title="Seek audio"
+                    className="flex shrink-0 ml-3 items-center space-x-1 font-mono text-[10px] text-[#67E8F9] hover:underline"
+                    title="Seek audio/video"
                   >
                     <Clock className="h-2.5 w-2.5" />
                     <span>{formatTime(d.timestamp_start)}</span>
                   </button>
                 </div>
 
-                <p className="mt-1 text-[11px] text-zinc-400">
+                <p className="mt-1 text-[11px] text-[#B3AFCB]">
                   {d.context}
                 </p>
 
                 {d.speaker && (
-                  <div className="mt-2 flex items-center text-[10px] text-zinc-500 font-mono">
+                  <div className="mt-2 flex items-center text-[10px] text-[#C4B5FD] font-mono">
                     <User className="mr-1 h-2.5 w-2.5" />
                     <span>{d.speaker}</span>
                   </div>
@@ -132,7 +137,7 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
       {analysis.action_items_json && analysis.action_items_json.length > 0 && (
         <section className="space-y-2">
           <div className="flex items-center justify-between px-1">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+            <h3 className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#C4B5FD]">
               Action Items ({analysis.action_items_json.length})
             </h3>
           </div>
@@ -143,16 +148,16 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
               return (
                 <div
                   key={idx}
-                  className={`group flex items-start space-x-3 rounded-lg border border-white/[0.05] bg-[#0c0e14] p-3 transition-all duration-150 hover:border-white/[0.12] hover:bg-white/[0.02] ${
-                    isChecked ? 'opacity-50' : ''
+                  className={`group flex items-start space-x-3 rounded-lg border border-[#2E2B45] bg-[#09090F] p-3 transition-all duration-150 hover:border-[#C4B5FD] ${
+                    isChecked ? 'opacity-40' : ''
                   }`}
                 >
                   <button
                     onClick={() => toggleTask(idx)}
                     className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition ${
                       isChecked
-                        ? 'border-sky-500 bg-sky-500 text-black'
-                        : 'border-zinc-700 bg-white/[0.02] hover:border-zinc-500'
+                        ? 'border-[#67E8F9] bg-[#67E8F9] text-black'
+                        : 'border-[#2E2B45] bg-white/[0.02] hover:border-[#C4B5FD]'
                     }`}
                   >
                     {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
@@ -161,21 +166,21 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
                   <div className="flex-1 min-w-0">
                     <p
                       className={`text-xs font-medium transition ${
-                        isChecked ? 'line-through text-zinc-500' : 'text-zinc-200'
+                        isChecked ? 'line-through text-[#B3AFCB]' : 'text-[#F1EFFA]'
                       }`}
                     >
                       {a.task}
                     </p>
 
-                    <div className="mt-1 flex flex-wrap items-center gap-3 font-mono text-[10px] text-zinc-500">
+                    <div className="mt-1 flex flex-wrap items-center gap-3 font-mono text-[10px] text-[#B3AFCB]">
                       {a.owner && (
-                        <div className="flex items-center">
+                        <div className="flex items-center text-[#C4B5FD]">
                           <User className="mr-1 h-2.5 w-2.5" />
                           <span>{a.owner}</span>
                         </div>
                       )}
                       {a.deadline && (
-                        <div className="flex items-center text-amber-500/80">
+                        <div className="flex items-center text-[#67E8F9]">
                           <Calendar className="mr-1 h-2.5 w-2.5" />
                           <span>{a.deadline}</span>
                         </div>
@@ -185,8 +190,8 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
 
                   <button
                     onClick={() => onSeek(a.timestamp_start)}
-                    className="flex shrink-0 items-center space-x-1 font-mono text-[10px] text-zinc-500 hover:text-sky-400"
-                    title="Seek audio"
+                    className="flex shrink-0 items-center space-x-1 font-mono text-[10px] text-[#67E8F9] hover:underline"
+                    title="Seek audio/video"
                   >
                     <Clock className="h-2.5 w-2.5" />
                     <span>{formatTime(a.timestamp_start)}</span>
@@ -202,8 +207,8 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
       {analysis.open_questions_json && analysis.open_questions_json.length > 0 && (
         <section className="space-y-2">
           <div className="flex items-center justify-between px-1">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-              Questions ({analysis.open_questions_json.length})
+            <h3 className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#C4B5FD]">
+              Open Questions ({analysis.open_questions_json.length})
             </h3>
           </div>
 
@@ -212,15 +217,15 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
               <div
                 key={idx}
                 onClick={() => onSeek(q.timestamp_start)}
-                className="group flex items-start justify-between rounded-lg border border-white/[0.05] bg-[#0c0e14] p-3 transition-all duration-150 hover:border-white/[0.12] hover:bg-white/[0.02] cursor-pointer"
+                className="group flex items-start justify-between rounded-lg border border-[#2E2B45] bg-[#09090F] p-3 transition-all duration-150 hover:border-[#C4B5FD] cursor-pointer"
               >
                 <div>
-                  <span className="text-xs font-medium text-zinc-200 group-hover:text-white">
+                  <span className="text-xs font-medium text-[#F1EFFA] group-hover:text-white">
                     {q.question}
                   </span>
                   {q.raised_by && (
-                    <div className="mt-1 flex items-center text-[10px] text-zinc-500 font-mono">
-                      <User className="mr-1 h-2.5 w-2.5" />
+                    <div className="mt-1 flex items-center text-[10px] text-[#B3AFCB] font-mono">
+                      <User className="mr-1 h-2.5 w-2.5 text-[#C4B5FD]" />
                       <span>{q.raised_by}</span>
                     </div>
                   )}
@@ -230,8 +235,8 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
                     e.stopPropagation();
                     onSeek(q.timestamp_start);
                   }}
-                  className="flex shrink-0 ml-3 items-center space-x-1 font-mono text-[10px] text-zinc-500 hover:text-sky-400"
-                  title="Seek audio"
+                  className="flex shrink-0 ml-3 items-center space-x-1 font-mono text-[10px] text-[#67E8F9] hover:underline"
+                  title="Seek audio/video"
                 >
                   <Clock className="h-2.5 w-2.5" />
                   <span>{formatTime(q.timestamp_start)}</span>

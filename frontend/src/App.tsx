@@ -25,7 +25,8 @@ import {
   GitBranch,
   FileText,
   Video,
-  Music
+  Music,
+  ArrowRight
 } from 'lucide-react';
 
 export default function App() {
@@ -39,6 +40,19 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingArtifact, setIsGeneratingArtifact] = useState(false);
   const [mediaViewMode, setMediaViewMode] = useState<'video' | 'waveform'>('video');
+  const [viewMode, setViewMode] = useState<'home' | 'studio'>('home');
+
+  // Interactive output selector state on landing
+  const [selectedOutputTab, setSelectedOutputTab] = useState<'summary' | 'notes' | 'flowchart'>('summary');
+
+  // Interactive verify demo state on landing
+  const [demoActiveIndex, setDemoActiveIndex] = useState(1);
+  const [demoTime, setDemoTime] = useState('18:24');
+  const [demoSpeaker, setDemoSpeaker] = useState('[SPEAKER_A]');
+  const [demoText, setDemoText] = useState(
+    'Agreed. Let\'s make an explicit decision: we will standardize on PostgreSQL 16 with pgvector for our vector embeddings.'
+  );
+  const [demoFlash, setDemoFlash] = useState(false);
 
   const audioPlayerRef = useRef<AudioPlayerHandle>(null);
   const videoPlayerRef = useRef<VideoPlayerHandle>(null);
@@ -53,12 +67,13 @@ export default function App() {
     try {
       const list = await fetchMeetings();
       setMeetings(list);
-      if (list.length > 0) {
-        const toSelect = selectId || list[0].id;
-        setSelectedMeetingId(toSelect);
-        loadMeetingDetail(toSelect);
-      } else {
-        setCurrentMeeting(null);
+      if (selectId) {
+        setSelectedMeetingId(selectId);
+        await loadMeetingDetail(selectId);
+        setViewMode('studio');
+      } else if (list.length > 0 && !selectedMeetingId) {
+        setSelectedMeetingId(list[0].id);
+        await loadMeetingDetail(list[0].id);
       }
     } catch (e) {
       console.error('Failed to load meetings', e);
@@ -135,6 +150,7 @@ export default function App() {
         } else {
           setSelectedMeetingId(undefined);
           setCurrentMeeting(null);
+          setViewMode('home');
         }
       }
     } catch (e) {
@@ -142,110 +158,224 @@ export default function App() {
     }
   };
 
+  const openMeetingInStudio = (id: string) => {
+    setSelectedMeetingId(id);
+    loadMeetingDetail(id);
+    setViewMode('studio');
+  };
+
+  const handleVerifyDemoClick = (index: number, time: string, speaker: string, text: string) => {
+    setDemoActiveIndex(index);
+    setDemoTime(time);
+    setDemoSpeaker(speaker);
+    setDemoText(text);
+    setDemoFlash(true);
+    setTimeout(() => setDemoFlash(false), 250);
+  };
+
   return (
-    <div className="flex h-screen w-full bg-[#08090d] text-zinc-100 overflow-hidden font-sans select-none">
-      {/* Sidebar */}
-      <Sidebar
-        meetings={meetings}
-        selectedMeetingId={selectedMeetingId}
-        onSelectMeeting={(id) => loadMeetingDetail(id)}
-        onDeleteMeeting={handleDeleteMeeting}
-        onNewMeetingClick={() => setIsUploadOpen(true)}
-      />
+    <div className="min-h-screen w-full bg-[#09090F] text-[#F1EFFA] font-sans antialiased selection:bg-[#67E8F9]/20 selection:text-[#67E8F9]">
+      {/* =====================================================================
+          STICKY TOP NAVIGATION
+          ===================================================================== */}
+      <header className="sticky top-0 z-40 w-full border-b border-[#2E2B45] bg-[#09090F]/90 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+          {/* Logo */}
+          <button
+            onClick={() => setViewMode('home')}
+            className="flex items-center space-x-2 font-mono text-base font-semibold text-[#C4B5FD] tracking-tight hover:opacity-90 transition"
+          >
+            <span>◆ MeetWhisper</span>
+          </button>
 
-      {/* Main Workspace Area */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Minimal App Header */}
-        <header className="flex h-12 shrink-0 items-center justify-between border-b border-white/[0.06] bg-[#0c0e14] px-5">
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center space-x-7 text-xs font-mono text-[#B3AFCB]">
+            <a
+              href="#features"
+              onClick={() => {
+                if (viewMode !== 'home') setViewMode('home');
+              }}
+              className="hover:text-[#F1EFFA] transition"
+            >
+              Features
+            </a>
+            <a
+              href="#how-it-works"
+              onClick={() => {
+                if (viewMode !== 'home') setViewMode('home');
+              }}
+              className="hover:text-[#F1EFFA] transition"
+            >
+              How it works
+            </a>
+            <a
+              href="#privacy"
+              onClick={() => {
+                if (viewMode !== 'home') setViewMode('home');
+              }}
+              className="hover:text-[#F1EFFA] transition"
+            >
+              Privacy
+            </a>
+            <a
+              href="https://github.com/nishantjadaun26/MeetWhisper"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[#F1EFFA] transition"
+            >
+              GitHub
+            </a>
+          </nav>
+
+          {/* Nav Right Actions */}
           <div className="flex items-center space-x-3">
-            <span className="font-semibold tracking-tight text-zinc-100 text-xs uppercase font-mono">
-              MeetWhisper
-            </span>
-          </div>
-
-          {currentMeeting && (
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2 text-xs">
-                {isVideo ? (
-                  <span className="flex items-center space-x-1 rounded bg-sky-500/10 px-1.5 py-0.5 text-[10px] text-sky-400 border border-sky-500/20 font-mono">
-                    <Video className="h-2.5 w-2.5" />
-                    <span>Video</span>
-                  </span>
+            {meetings.length > 0 && (
+              <button
+                onClick={() => setViewMode(viewMode === 'studio' ? 'home' : 'studio')}
+                className="hidden sm:inline-flex items-center space-x-1.5 rounded-lg border border-[#2E2B45] bg-white/[0.03] px-3 py-1.5 text-xs font-mono text-[#C4B5FD] hover:border-[#C4B5FD] hover:bg-white/[0.06] transition"
+              >
+                {viewMode === 'studio' ? (
+                  <span>View Overview</span>
                 ) : (
-                  <span className="flex items-center space-x-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-400 border border-emerald-500/20 font-mono">
-                    <Music className="h-2.5 w-2.5" />
-                    <span>Audio</span>
-                  </span>
+                  <>
+                    <span>Studio Session</span>
+                    <span className="rounded bg-[#C4B5FD]/10 px-1 text-[10px] text-[#67E8F9]">
+                      {meetings.length}
+                    </span>
+                  </>
                 )}
-                <span className="font-medium text-zinc-200 max-w-[280px] truncate">
-                  {currentMeeting.title}
-                </span>
-                <span className="flex items-center rounded bg-white/[0.04] px-2 py-0.5 font-mono text-[10px] text-zinc-400 border border-white/[0.04]">
-                  <Clock className="mr-1 h-2.5 w-2.5 text-zinc-500" />
-                  {formatTime(currentMeeting.duration_seconds)}
-                </span>
+              </button>
+            )}
+
+            <button
+              onClick={() => setIsUploadOpen(true)}
+              className="btn-gradient !h-9 !px-4 !text-xs !rounded-lg"
+            >
+              <Plus className="mr-1 h-3.5 w-3.5" />
+              <span>Upload Recording</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* =====================================================================
+          VIEW: STUDIO WORKSPACE
+          ===================================================================== */}
+      {viewMode === 'studio' && (
+        <div className="flex h-[calc(100vh-64px)] w-full overflow-hidden">
+          {/* Sidebar */}
+          <Sidebar
+            meetings={meetings}
+            selectedMeetingId={selectedMeetingId}
+            onSelectMeeting={(id) => loadMeetingDetail(id)}
+            onDeleteMeeting={handleDeleteMeeting}
+            onNewMeetingClick={() => setIsUploadOpen(true)}
+            onGoHome={() => setViewMode('home')}
+          />
+
+          {/* Main Studio Area */}
+          <div className="flex flex-1 flex-col overflow-hidden bg-[#09090F]">
+            {/* Minimal Sub-header */}
+            <div className="flex h-11 shrink-0 items-center justify-between border-b border-[#2E2B45] px-4 bg-[#09090F]">
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setViewMode('home')}
+                  className="font-mono text-[11px] text-[#B3AFCB] hover:text-[#C4B5FD] transition flex items-center space-x-1"
+                >
+                  <span>← Overview</span>
+                </button>
+
+                {currentMeeting && (
+                  <div className="flex items-center space-x-2 text-xs border-l border-[#2E2B45] pl-3">
+                    {isVideo ? (
+                      <span className="flex items-center space-x-1 rounded bg-[#67E8F9]/10 px-1.5 py-0.5 text-[10px] text-[#67E8F9] border border-[#67E8F9]/20 font-mono">
+                        <Video className="h-2.5 w-2.5" />
+                        <span>Video</span>
+                      </span>
+                    ) : (
+                      <span className="flex items-center space-x-1 rounded bg-[#C4B5FD]/10 px-1.5 py-0.5 text-[10px] text-[#C4B5FD] border border-[#C4B5FD]/20 font-mono">
+                        <Music className="h-2.5 w-2.5" />
+                        <span>Audio</span>
+                      </span>
+                    )}
+                    <span className="font-medium text-[#F1EFFA] max-w-[280px] truncate">
+                      {currentMeeting.title}
+                    </span>
+                    <span className="flex items-center rounded bg-white/[0.04] px-1.5 py-0.5 font-mono text-[10px] text-[#B3AFCB] border border-[#2E2B45]">
+                      <Clock className="mr-1 h-2.5 w-2.5 text-[#B3AFCB]" />
+                      {formatTime(currentMeeting.duration_seconds)}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {/* Export Button */}
-              <button
-                onClick={() => setIsExportOpen(true)}
-                className="flex items-center space-x-1.5 rounded-md border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-xs font-medium text-zinc-300 hover:bg-white/[0.08] hover:text-white transition"
-              >
-                <Share2 className="h-3 w-3" />
-                <span>Export</span>
-              </button>
+              {currentMeeting && (
+                <button
+                  onClick={() => setIsExportOpen(true)}
+                  className="flex items-center space-x-1.5 rounded-md border border-[#2E2B45] bg-white/[0.03] px-2.5 py-1 text-xs font-mono text-[#B3AFCB] hover:bg-white/[0.08] hover:text-[#F1EFFA] transition"
+                >
+                  <Share2 className="h-3 w-3" />
+                  <span>Export</span>
+                </button>
+              )}
             </div>
-          )}
-        </header>
 
-        {/* Workspace Body */}
-        {isLoading ? (
-          <div className="flex flex-1 items-center justify-center space-x-2 text-zinc-400">
-            <Loader2 className="h-5 w-5 animate-spin text-zinc-500" />
-            <span className="text-xs font-medium">Loading session...</span>
-          </div>
-        ) : currentMeeting ? (
-          <div className="flex flex-1 overflow-hidden p-3 gap-3">
-            {/* Left Pane: Media Player (Video or Waveform) & Speaker Transcript */}
-            <div className="flex w-5/12 flex-col space-y-3 overflow-hidden">
-              {isVideo ? (
-                <div className="space-y-2">
-                  {/* View Mode Toggle when Video */}
-                  <div className="flex items-center justify-between px-1">
-                    <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
-                      Media Stream
-                    </span>
-                    <div className="flex items-center rounded-md border border-white/[0.06] bg-black/40 p-0.5 text-[10px]">
-                      <button
-                        onClick={() => setMediaViewMode('video')}
-                        className={`rounded px-2 py-0.5 transition ${
-                          mediaViewMode === 'video'
-                            ? 'bg-white/[0.1] text-white'
-                            : 'text-zinc-500 hover:text-zinc-300'
-                        }`}
-                      >
-                        Video Player
-                      </button>
-                      <button
-                        onClick={() => setMediaViewMode('waveform')}
-                        className={`rounded px-2 py-0.5 transition ${
-                          mediaViewMode === 'waveform'
-                            ? 'bg-white/[0.1] text-white'
-                            : 'text-zinc-500 hover:text-zinc-300'
-                        }`}
-                      >
-                        Audio Waveform
-                      </button>
+            {/* Studio Body */}
+            {isLoading ? (
+              <div className="flex flex-1 items-center justify-center space-x-2 text-[#B3AFCB]">
+                <Loader2 className="h-5 w-5 animate-spin text-[#67E8F9]" />
+                <span className="text-xs font-mono">Loading session intelligence...</span>
+              </div>
+            ) : currentMeeting ? (
+              <div className="flex flex-1 overflow-hidden p-3 gap-3">
+                {/* Left Pane: Media Player (Video or Waveform) & Speaker Transcript */}
+                <div className="flex w-5/12 flex-col space-y-3 overflow-hidden">
+                  {isVideo ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between px-1">
+                        <span className="text-[10px] font-mono text-[#B3AFCB] uppercase tracking-wider">
+                          Media Stream
+                        </span>
+                        <div className="flex items-center rounded-md border border-[#2E2B45] bg-black/40 p-0.5 text-[10px] font-mono">
+                          <button
+                            onClick={() => setMediaViewMode('video')}
+                            className={`rounded px-2 py-0.5 transition ${
+                              mediaViewMode === 'video'
+                                ? 'bg-white/[0.1] text-[#F1EFFA]'
+                                : 'text-[#B3AFCB] hover:text-[#F1EFFA]'
+                            }`}
+                          >
+                            Video Player
+                          </button>
+                          <button
+                            onClick={() => setMediaViewMode('waveform')}
+                            className={`rounded px-2 py-0.5 transition ${
+                              mediaViewMode === 'waveform'
+                                ? 'bg-white/[0.1] text-[#F1EFFA]'
+                                : 'text-[#B3AFCB] hover:text-[#F1EFFA]'
+                            }`}
+                          >
+                            Audio Waveform
+                          </button>
+                        </div>
+                      </div>
+
+                      {mediaViewMode === 'video' ? (
+                        <VideoPlayer
+                          ref={videoPlayerRef}
+                          videoUrl={getAudioUrl(currentMeeting.id)}
+                          duration={currentMeeting.duration_seconds}
+                          onTimeUpdate={(time) => setCurrentTime(time)}
+                        />
+                      ) : (
+                        <AudioPlayer
+                          ref={audioPlayerRef}
+                          audioUrl={getAudioUrl(currentMeeting.id)}
+                          duration={currentMeeting.duration_seconds}
+                          onTimeUpdate={(time) => setCurrentTime(time)}
+                        />
+                      )}
                     </div>
-                  </div>
-
-                  {mediaViewMode === 'video' ? (
-                    <VideoPlayer
-                      ref={videoPlayerRef}
-                      videoUrl={getAudioUrl(currentMeeting.id)}
-                      duration={currentMeeting.duration_seconds}
-                      onTimeUpdate={(time) => setCurrentTime(time)}
-                    />
                   ) : (
                     <AudioPlayer
                       ref={audioPlayerRef}
@@ -254,107 +384,796 @@ export default function App() {
                       onTimeUpdate={(time) => setCurrentTime(time)}
                     />
                   )}
-                </div>
-              ) : (
-                <AudioPlayer
-                  ref={audioPlayerRef}
-                  audioUrl={getAudioUrl(currentMeeting.id)}
-                  duration={currentMeeting.duration_seconds}
-                  onTimeUpdate={(time) => setCurrentTime(time)}
-                />
-              )}
 
-              <div className="flex-1 overflow-hidden">
-                <TranscriptViewer
-                  segments={currentMeeting.transcript_segments || []}
-                  currentTime={currentTime}
-                  onSeek={handleSeek}
-                />
+                  <div className="flex-1 overflow-hidden">
+                    <TranscriptViewer
+                      segments={currentMeeting.transcript_segments || []}
+                      currentTime={currentTime}
+                      onSeek={handleSeek}
+                    />
+                  </div>
+                </div>
+
+                {/* Right Pane: Tabbed Structured Intelligence & Interactive Flowchart */}
+                <div className="flex w-7/12 flex-col overflow-hidden rounded-xl border border-[#2E2B45] bg-[#09090F] p-3.5">
+                  <div className="flex items-center justify-between border-b border-[#2E2B45] pb-2.5 mb-3">
+                    <div className="relative flex items-center bg-black/50 p-1 rounded-lg border border-[#2E2B45]">
+                      <div
+                        className={`absolute top-1 bottom-1 w-[130px] rounded-md bg-white/[0.08] transition-all duration-200 ease-out ${
+                          activeTab === 'graph' ? 'left-1' : 'left-[135px]'
+                        }`}
+                      />
+                      <button
+                        onClick={() => setActiveTab('graph')}
+                        className={`relative z-10 flex w-[130px] items-center justify-center space-x-1.5 py-1 text-xs font-medium transition-colors ${
+                          activeTab === 'graph' ? 'text-[#F1EFFA]' : 'text-[#B3AFCB] hover:text-[#F1EFFA]'
+                        }`}
+                      >
+                        <GitBranch className="h-3 w-3 text-[#C4B5FD]" />
+                        <span>Visual Graph</span>
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('summary')}
+                        className={`relative z-10 flex w-[130px] items-center justify-center space-x-1.5 py-1 text-xs font-medium transition-colors ${
+                          activeTab === 'summary' ? 'text-[#F1EFFA]' : 'text-[#B3AFCB] hover:text-[#F1EFFA]'
+                        }`}
+                      >
+                        <FileText className="h-3 w-3 text-[#67E8F9]" />
+                        <span>Summary & Actions</span>
+                      </button>
+                    </div>
+
+                    <div className="text-[10px] text-[#B3AFCB] font-mono">
+                      Click timestamps to verify audio/video
+                    </div>
+                  </div>
+
+                  {/* Tab Content */}
+                  <div className="flex-1 overflow-hidden">
+                    {activeTab === 'graph' ? (
+                      <div key="graph" className="h-full w-full animate-slide-right">
+                        <GraphCanvas
+                          graph={currentMeeting.analysis?.graph_json || { nodes: [], edges: [] }}
+                          graphType={currentMeeting.analysis?.graph_type}
+                          onSeek={handleSeek}
+                          onGenerateFlowchart={() => handleGenerateArtifact('flowchart')}
+                          isGenerating={isGeneratingArtifact}
+                        />
+                      </div>
+                    ) : currentMeeting.analysis ? (
+                      <div key="summary" className="h-full w-full animate-slide-left">
+                        <StructuredSummary
+                          analysis={currentMeeting.analysis}
+                          onSeek={handleSeek}
+                          onGenerateNotes={() => handleGenerateArtifact('notes')}
+                          isGenerating={isGeneratingArtifact}
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex h-full flex-col items-center justify-center p-8 text-center text-xs text-[#B3AFCB]/50">
+                        No analysis available
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-1 flex-col items-center justify-center p-8 text-center animate-fade">
+                <h3 className="text-sm font-medium text-[#F1EFFA] mb-1">No Recording Selected</h3>
+                <p className="text-xs text-[#B3AFCB] max-w-xs mb-5">
+                  Upload an audio or video file to extract transcripts, action items, and interactive flowcharts.
+                </p>
+                <button
+                  onClick={() => setIsUploadOpen(true)}
+                  className="btn-gradient !h-9 !px-4 !text-xs !rounded-lg"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" />
+                  <span>Upload Recording</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          VIEW: MARKETING SINGLE-PAGE (Default / Home / Overview)
+          ===================================================================== */}
+      {viewMode === 'home' && (
+        <main className="w-full">
+          {/* HERO WITH BACKGROUND GRID & GLOWS */}
+          <div className="hero-glow-bg border-b border-[#2E2B45] relative overflow-hidden">
+            <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:py-28">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+                {/* Hero Left Content */}
+                <div className="lg:col-span-6 flex flex-col items-start">
+                  <div className="inline-flex items-center space-x-2 rounded-full border border-[#67E8F9]/35 bg-[#67E8F9]/[0.06] px-3.5 py-1.5 text-xs font-mono font-medium text-[#67E8F9] mb-6">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#67E8F9]" />
+                    <span>Audio + Video supported</span>
+                  </div>
+
+                  <h1 className="text-[34px] sm:text-[46px] font-bold leading-[1.1] tracking-[-1px] text-[#F1EFFA] mb-5">
+                    Don't just summarize meetings. <span className="gradient-text">Verify them.</span>
+                  </h1>
+
+                  <p className="text-base leading-relaxed text-[#B3AFCB] max-w-[520px] mb-8">
+                    Upload any recording and get action items, decision flowcharts or mind maps. Every point is linked to the exact moment it was said.
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-3.5 w-full">
+                    <button
+                      onClick={() => setIsUploadOpen(true)}
+                      className="btn-gradient"
+                    >
+                      Try MeetWhisper
+                    </button>
+                    <button
+                      onClick={() => setIsUploadOpen(true)}
+                      className="btn-mono-box cursor-pointer"
+                    >
+                      Upload .mp3 · .wav · .mp4 · .mov
+                    </button>
+                  </div>
+                </div>
+
+                {/* Hero Right Visual Mockup (Pure HTML/CSS) */}
+                <div className="lg:col-span-6 w-full">
+                  <div className="relative rounded-2xl border border-[#2E2B45] bg-[#09090F] p-4 sm:p-5 shadow-2xl transition hover:border-[#C4B5FD]">
+                    {/* Mockup Waveform Player */}
+                    <div className="rounded-xl border border-[#2E2B45] bg-white/[0.03] p-3 sm:p-4 mb-4">
+                      <div className="flex items-center justify-between text-[11px] font-mono mb-2.5">
+                        <span className="text-[#67E8F9] flex items-center space-x-1.5">
+                          <Video className="h-3 w-3" />
+                          <span>[RECORDING_FILENAME.mp4]</span>
+                        </span>
+                        <span className="text-[#B3AFCB]">[12:04 / 48:15]</span>
+                      </div>
+
+                      {/* Fake Waveform */}
+                      <div className="relative flex h-9 items-center gap-1">
+                        {[35, 65, 90, 40, 75, 50, 85, 30, 70, 95, 45, 60, 80, 40, 65, 90, 35, 75, 50, 40].map((h, i) => (
+                          <div
+                            key={i}
+                            className={`flex-1 rounded-sm ${i < 10 ? 'bg-[#67E8F9]' : 'bg-[#2E2B45]'}`}
+                            style={{ height: `${h}%` }}
+                          />
+                        ))}
+                        <div className="absolute left-[48%] top-0 bottom-0 w-0.5 bg-[#C4B5FD] shadow-[0_0_8px_rgba(196,181,253,0.8)]" />
+                      </div>
+                    </div>
+
+                    {/* 3 Synced Mockup Panels */}
+                    <div className="space-y-3">
+                      {/* Panel 1: Bullets / Action Item */}
+                      <div className="rounded-lg border border-[#2E2B45] bg-white/[0.03] p-3">
+                        <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-[#B3AFCB] mb-1.5">
+                          <span>Structured Extraction</span>
+                          <span className="text-[#67E8F9]">[12:04]</span>
+                        </div>
+                        <div className="flex items-start space-x-2 text-xs text-[#F1EFFA]">
+                          <span className="font-mono text-[10px] text-[#C4B5FD] bg-[#C4B5FD]/10 border border-[#C4B5FD]/30 px-1.5 py-0.5 rounded">
+                            Action
+                          </span>
+                          <span>Action item: [OWNER] to [TASK] by [DATE]</span>
+                        </div>
+                      </div>
+
+                      {/* Panel 2: Mini Flowchart */}
+                      <div className="rounded-lg border border-[#2E2B45] bg-white/[0.03] p-3">
+                        <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-[#B3AFCB] mb-2">
+                          <span>Decision Flow</span>
+                          <span className="text-[#67E8F9]">[VERIFIED]</span>
+                        </div>
+                        <div className="flex items-center space-x-2 overflow-x-auto text-[11px] font-mono">
+                          <div className="rounded border border-[#2E2B45] bg-[#09090F] px-2 py-1 text-[#F1EFFA]">
+                            [Problem]
+                          </div>
+                          <span className="text-[#B3AFCB]">→</span>
+                          <div className="rounded border border-[#2E2B45] bg-[#09090F] px-2 py-1 text-[#F1EFFA]">
+                            [Options]
+                          </div>
+                          <span className="text-[#B3AFCB]">→</span>
+                          <div className="rounded border border-[#67E8F9] bg-[#67E8F9]/10 px-2 py-1 text-[#67E8F9] font-medium">
+                            [Decision]
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Panel 3: Synced Transcript Line */}
+                      <div className="rounded-lg border border-[#2E2B45] bg-white/[0.03] p-3">
+                        <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-[#B3AFCB] mb-1.5">
+                          <span>Grounded Transcript</span>
+                          <span className="text-[#67E8F9]">[12:04]</span>
+                        </div>
+                        <div className="rounded-r border-l-2 border-[#67E8F9] bg-[#67E8F9]/[0.05] p-2 text-xs text-[#F1EFFA] leading-relaxed">
+                          <span className="font-mono font-semibold text-[#67E8F9] mr-1.5">
+                            [SPEAKER_A]:
+                          </span>
+                          "Agreed. Let's make an explicit decision: [OWNER] will standardize the architecture and finalize models by [DATE]."
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
+          </div>
 
-            {/* Right Pane: Tabbed Structured Intelligence & Interactive Flowchart */}
-            <div className="flex w-7/12 flex-col overflow-hidden rounded-xl border border-white/[0.06] bg-[#0c0e14] p-3.5">
-              {/* Minimal Sliding Tab Selector */}
-              <div className="flex items-center justify-between border-b border-white/[0.06] pb-2.5 mb-3">
-                <div className="relative flex items-center bg-black/40 p-1 rounded-lg border border-white/[0.04]">
-                  {/* Sliding highlight indicator */}
-                  <div
-                    className={`absolute top-1 bottom-1 w-[130px] rounded-md bg-white/[0.08] transition-all duration-200 ease-out ${
-                      activeTab === 'graph' ? 'left-1' : 'left-[135px]'
-                    }`}
-                  />
+          {/* ACTIVE RECORDINGS SHELF (If any uploaded) */}
+          {meetings.length > 0 && (
+            <div className="border-b border-[#2E2B45] bg-[#09090F] py-8">
+              <div className="mx-auto max-w-7xl px-4 sm:px-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <span className="font-mono text-xs text-[#67E8F9] uppercase tracking-wider">
+                      Your Sessions
+                    </span>
+                    <h3 className="text-lg font-semibold text-[#F1EFFA]">
+                      Active Recordings in Workspace
+                    </h3>
+                  </div>
                   <button
-                    onClick={() => setActiveTab('graph')}
-                    className={`relative z-10 flex w-[130px] items-center justify-center space-x-1.5 py-1 text-xs font-medium transition-colors ${
-                      activeTab === 'graph' ? 'text-white' : 'text-zinc-400 hover:text-zinc-200'
-                    }`}
+                    onClick={() => setViewMode('studio')}
+                    className="flex items-center space-x-1 font-mono text-xs text-[#C4B5FD] hover:underline"
                   >
-                    <GitBranch className="h-3 w-3" />
-                    <span>Visual Graph</span>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('summary')}
-                    className={`relative z-10 flex w-[130px] items-center justify-center space-x-1.5 py-1 text-xs font-medium transition-colors ${
-                      activeTab === 'summary' ? 'text-white' : 'text-zinc-400 hover:text-zinc-200'
-                    }`}
-                  >
-                    <FileText className="h-3 w-3" />
-                    <span>Summary & Actions</span>
+                    <span>Open Full Studio</span>
+                    <ArrowRight className="h-3 w-3" />
                   </button>
                 </div>
 
-                <div className="text-[10px] text-zinc-500 font-mono">
-                  Click timestamps to seek
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {meetings.map((m) => {
+                    const isVid = m.mime_type?.startsWith('video/') || /\.(mp4|webm|mov|mkv)$/i.test(m.filename);
+                    return (
+                      <div
+                        key={m.id}
+                        onClick={() => openMeetingInStudio(m.id)}
+                        className="group flex items-center justify-between rounded-xl border border-[#2E2B45] bg-white/[0.02] p-3.5 hover:border-[#C4B5FD] hover:bg-white/[0.04] transition cursor-pointer"
+                      >
+                        <div className="flex items-center space-x-3 min-w-0">
+                          {isVid ? (
+                            <Video className="h-4 w-4 text-[#67E8F9] shrink-0" />
+                          ) : (
+                            <Music className="h-4 w-4 text-[#C4B5FD] shrink-0" />
+                          )}
+                          <div className="min-w-0">
+                            <span className="text-xs font-semibold text-[#F1EFFA] block truncate group-hover:text-[#67E8F9] transition">
+                              {m.title}
+                            </span>
+                            <span className="text-[10px] font-mono text-[#B3AFCB]">
+                              {formatTime(m.duration_seconds)} · {isVid ? 'Video' : 'Audio'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <span className="font-mono text-[11px] text-[#C4B5FD] opacity-0 group-hover:opacity-100 transition shrink-0 ml-2">
+                          Inspect →
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
+            </div>
+          )}
 
-              {/* Tab Content with smooth slide animation */}
-              <div className="flex-1 overflow-hidden">
-                {activeTab === 'graph' ? (
-                  <div key="graph" className="h-full w-full animate-slide-right">
-                    <GraphCanvas
-                      graph={currentMeeting.analysis?.graph_json || { nodes: [], edges: [] }}
-                      graphType={currentMeeting.analysis?.graph_type}
-                      onSeek={handleSeek}
-                      onGenerateFlowchart={() => handleGenerateArtifact('flowchart')}
-                      isGenerating={isGeneratingArtifact}
-                    />
+          {/* SECTION 1: CHOOSE YOUR OUTPUT */}
+          <section className="py-20 border-b border-[#2E2B45]" id="outputs">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6">
+              <div className="max-w-2xl mb-10">
+                <span className="font-mono text-xs uppercase tracking-wider text-[#67E8F9] mb-2 block">
+                  Outputs
+                </span>
+                <h2 className="text-3xl font-bold tracking-tight text-[#F1EFFA] mb-3">
+                  Choose your output
+                </h2>
+                <p className="text-sm text-[#B3AFCB] leading-relaxed">
+                  Don't settle for one-size-fits-all text blobs. Select the exact structured format tailored for your cognitive workflow.
+                </p>
+              </div>
+
+              {/* Segmented Selector */}
+              <div className="flex max-w-md rounded-xl border border-[#2E2B45] bg-white/[0.02] p-1 gap-1 mb-6 font-mono text-xs">
+                <button
+                  onClick={() => setSelectedOutputTab('summary')}
+                  className={`flex-1 rounded-lg py-2.5 transition text-center font-semibold ${
+                    selectedOutputTab === 'summary'
+                      ? 'border border-[#C4B5FD] bg-white/[0.06] text-[#F1EFFA] shadow-sm'
+                      : 'text-[#B3AFCB] hover:text-[#F1EFFA]'
+                  }`}
+                >
+                  Summary
+                </button>
+                <button
+                  onClick={() => setSelectedOutputTab('notes')}
+                  className={`flex-1 rounded-lg py-2.5 transition text-center font-semibold ${
+                    selectedOutputTab === 'notes'
+                      ? 'border border-[#C4B5FD] bg-white/[0.06] text-[#F1EFFA] shadow-sm'
+                      : 'text-[#B3AFCB] hover:text-[#F1EFFA]'
+                  }`}
+                >
+                  Notes
+                </button>
+                <button
+                  onClick={() => setSelectedOutputTab('flowchart')}
+                  className={`flex-1 rounded-lg py-2.5 transition text-center font-semibold ${
+                    selectedOutputTab === 'flowchart'
+                      ? 'border border-[#C4B5FD] bg-white/[0.06] text-[#F1EFFA] shadow-sm'
+                      : 'text-[#B3AFCB] hover:text-[#F1EFFA]'
+                  }`}
+                >
+                  Flowchart / Mind Map
+                </button>
+              </div>
+
+              {/* Preview Cards */}
+              <div className="rounded-2xl border border-[#2E2B45] bg-white/[0.02] p-6 sm:p-8 transition hover:border-[#C4B5FD]">
+                {selectedOutputTab === 'summary' && (
+                  <div className="animate-fade">
+                    <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#2E2B45]">
+                      <h3 className="text-base font-semibold text-[#F1EFFA]">Executive Overview</h3>
+                      <span className="font-mono text-[11px] text-[#67E8F9] border border-[#67E8F9]/30 px-2 py-0.5 rounded">
+                        [EXECUTIVE_SUMMARY]
+                      </span>
+                    </div>
+                    <p className="text-sm text-[#B3AFCB] leading-relaxed mb-4">
+                      The engineering team evaluated the architectural migration from legacy monolithic storage to a scalable event mesh. Key benchmarks confirmed PostgreSQL with pgvector provides superior developer velocity and satisfies strict 12ms p99 latency targets. Disaster recovery procedures and failover automation were prioritized for staging launch.
+                    </p>
+                    <div className="flex flex-wrap gap-4 font-mono text-xs text-[#67E8F9]">
+                      <span>• 3 Key Decisions</span>
+                      <span>• 2 Action Items</span>
+                      <span>• 1 Open Question</span>
+                    </div>
                   </div>
-                ) : currentMeeting.analysis ? (
-                  <div key="summary" className="h-full w-full animate-slide-left">
-                    <StructuredSummary
-                      analysis={currentMeeting.analysis}
-                      onSeek={handleSeek}
-                      onGenerateNotes={() => handleGenerateArtifact('notes')}
-                      isGenerating={isGeneratingArtifact}
-                    />
+                )}
+
+                {selectedOutputTab === 'notes' && (
+                  <div className="animate-fade">
+                    <div className="flex items-center justify-between pb-4 mb-5 border-b border-[#2E2B45]">
+                      <h3 className="text-base font-semibold text-[#F1EFFA]">Structured Meeting Notes</h3>
+                      <span className="font-mono text-[11px] text-[#67E8F9] border border-[#67E8F9]/30 px-2 py-0.5 rounded">
+                        [STRUCTURED_NOTES]
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Decisions */}
+                      <div className="rounded-xl border border-[#2E2B45] bg-[#09090F] p-4">
+                        <h4 className="font-mono text-[11px] uppercase tracking-wider text-[#C4B5FD] mb-2.5">
+                          Decisions Made
+                        </h4>
+                        <ul className="space-y-2 text-xs text-[#B3AFCB]">
+                          <li className="flex justify-between items-start gap-2">
+                            <span><strong className="text-[#F1EFFA]">Standardize architecture:</strong> Adopt PostgreSQL 16 with pgvector for vector embeddings.</span>
+                            <span className="font-mono text-[10px] text-[#67E8F9] shrink-0">[18:24]</span>
+                          </li>
+                        </ul>
+                      </div>
+
+                      {/* Action Items */}
+                      <div className="rounded-xl border border-[#2E2B45] bg-[#09090F] p-4">
+                        <h4 className="font-mono text-[11px] uppercase tracking-wider text-[#C4B5FD] mb-2.5">
+                          Action Items
+                        </h4>
+                        <ul className="space-y-2 text-xs text-[#B3AFCB]">
+                          <li className="flex justify-between items-start gap-2">
+                            <span><strong className="text-[#F1EFFA]">[Marcus (DevOps)]:</strong> Configure automated WAL shipping to S3 and document failover drill.</span>
+                            <span className="font-mono text-[10px] text-[#67E8F9] shrink-0">[36:50]</span>
+                          </li>
+                        </ul>
+                      </div>
+
+                      {/* Questions */}
+                      <div className="rounded-xl border border-[#2E2B45] bg-[#09090F] p-4">
+                        <h4 className="font-mono text-[11px] uppercase tracking-wider text-[#C4B5FD] mb-2.5">
+                          Open Questions
+                        </h4>
+                        <ul className="space-y-2 text-xs text-[#B3AFCB]">
+                          <li className="flex justify-between items-start gap-2">
+                            <span>What is our disaster recovery RPO for the streaming replication replicas in us-west-2?</span>
+                            <span className="font-mono text-[10px] text-[#67E8F9] shrink-0">[25:30]</span>
+                          </li>
+                        </ul>
+                      </div>
+
+                      {/* Topic Segments */}
+                      <div className="rounded-xl border border-[#2E2B45] bg-[#09090F] p-4">
+                        <h4 className="font-mono text-[11px] uppercase tracking-wider text-[#C4B5FD] mb-2.5">
+                          Topic Segments
+                        </h4>
+                        <ul className="space-y-2 text-xs text-[#B3AFCB]">
+                          <li className="flex justify-between items-start gap-2">
+                            <span>01. Architecture & Storage Benchmark Review</span>
+                            <span className="font-mono text-[10px] text-[#67E8F9] shrink-0">[00:00 - 25:00]</span>
+                          </li>
+                          <li className="flex justify-between items-start gap-2">
+                            <span>02. Disaster Recovery & Failover Logistics</span>
+                            <span className="font-mono text-[10px] text-[#67E8F9] shrink-0">[25:30 - 66:00]</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
                   </div>
-                ) : (
-                  <div className="flex h-full flex-col items-center justify-center p-8 text-center text-xs text-zinc-600">
-                    No analysis available
+                )}
+
+                {selectedOutputTab === 'flowchart' && (
+                  <div className="animate-fade">
+                    <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#2E2B45]">
+                      <h3 className="text-base font-semibold text-[#F1EFFA]">Decision Flowchart & Concept Mind Map</h3>
+                      <span className="font-mono text-[11px] text-[#67E8F9] border border-[#67E8F9]/30 px-2 py-0.5 rounded">
+                        [VALIDATED_GRAPH]
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#B3AFCB] mb-5">
+                      Decision Flowchart for meetings and debates (problem → options → trade-offs → decision), and Concept Mind Maps for lectures, speeches, and podcasts:
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="rounded-lg border border-[#2E2B45] bg-[#09090F] p-3 text-xs font-mono">
+                        <span className="text-[10px] uppercase text-[#C4B5FD] block">Problem</span>
+                        <span className="text-[#F1EFFA] font-medium">[Storage scalability bottleneck]</span>
+                      </div>
+                      <span className="font-mono text-xs text-[#B3AFCB]">leads to →</span>
+                      <div className="rounded-lg border border-[#2E2B45] bg-[#09090F] p-3 text-xs font-mono">
+                        <span className="text-[10px] uppercase text-[#C4B5FD] block">Options</span>
+                        <span className="text-[#F1EFFA] font-medium">[Compare Option A vs Option B]</span>
+                      </div>
+                      <span className="font-mono text-xs text-[#B3AFCB]">evaluates →</span>
+                      <div className="rounded-lg border border-[#2E2B45] bg-[#09090F] p-3 text-xs font-mono">
+                        <span className="text-[10px] uppercase text-[#C4B5FD] block">Trade-offs</span>
+                        <span className="text-[#F1EFFA] font-medium">[12ms p99 vs Operational overhead]</span>
+                      </div>
+                      <span className="font-mono text-xs text-[#B3AFCB]">justifies →</span>
+                      <div className="rounded-lg border border-[#67E8F9] bg-[#67E8F9]/10 p-3 text-xs font-mono">
+                        <span className="text-[10px] uppercase text-[#67E8F9] block font-semibold">Decision</span>
+                        <span className="text-[#67E8F9] font-medium">[Standardize on Option A]</span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
             </div>
-          </div>
-        ) : (
-          /* Clean Minimal Empty State */
-          <div className="flex flex-1 flex-col items-center justify-center p-8 text-center animate-fade">
-            <h3 className="text-sm font-medium text-zinc-200 mb-1">No Recording Selected</h3>
-            <p className="text-xs text-zinc-500 max-w-xs mb-5">
-              Upload an audio or video file to extract transcripts, action items, and interactive flowcharts.
-            </p>
-            <button
-              onClick={() => setIsUploadOpen(true)}
-              className="flex items-center space-x-1.5 rounded-lg border border-white/[0.1] bg-white/[0.05] px-4 py-2 text-xs font-medium text-zinc-200 hover:bg-white/[0.1] hover:border-white/[0.2] transition"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>Upload Recording</span>
-            </button>
-          </div>
-        )}
-      </div>
+          </section>
+
+          {/* SECTION 2: CLICK TO VERIFY (Interactive Demo) */}
+          <section className="py-20 border-b border-[#2E2B45]">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                <div className="lg:col-span-5">
+                  <span className="font-mono text-xs uppercase tracking-wider text-[#67E8F9] mb-2 block">
+                    Zero Hallucinations
+                  </span>
+                  <h2 className="text-3xl font-bold tracking-tight text-[#F1EFFA] mb-4">
+                    Click to verify
+                  </h2>
+                  <p className="text-sm text-[#B3AFCB] leading-relaxed mb-4">
+                    Every bullet, action item and diagram node is strictly tied to its <span className="font-mono text-[#67E8F9]">[mm:ss]</span> timestamp and speaker label.
+                  </p>
+                  <p className="text-sm text-[#B3AFCB] leading-relaxed">
+                    Never wonder whether the AI hallucinated an agreement. Clicking any extracted point jumps the audio or video directly to that exact second and lights up the speaker-diarized transcript line for instant verification.
+                  </p>
+                </div>
+
+                {/* Interactive Demo Box */}
+                <div className="lg:col-span-7 rounded-2xl border border-[#2E2B45] bg-white/[0.02] p-5 sm:p-6 transition hover:border-[#C4B5FD]">
+                  <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#2E2B45] text-xs font-mono">
+                    <span className="text-[#B3AFCB]">Audio/Video scrub position:</span>
+                    <span className="text-[#67E8F9] font-semibold">[{demoTime}]</span>
+                  </div>
+
+                  <span className="font-mono text-[11px] text-[#B3AFCB] mb-2 block">
+                    Click an extracted point to seek & highlight:
+                  </span>
+
+                  <div className="space-y-2.5 mb-5">
+                    <button
+                      onClick={() => handleVerifyDemoClick(
+                        1,
+                        '18:24',
+                        '[Alex (Tech Lead)]',
+                        'Agreed. Let\'s make an explicit decision: we will standardize on PostgreSQL 16 with pgvector for our vector embeddings.'
+                      )}
+                      className={`w-full flex items-center justify-between rounded-lg border p-3 text-left text-xs transition cursor-pointer ${
+                        demoActiveIndex === 1
+                          ? 'border-[#67E8F9] bg-[#67E8F9]/10 text-[#F1EFFA]'
+                          : 'border-[#2E2B45] bg-[#09090F] text-[#B3AFCB] hover:border-[#C4B5FD]'
+                      }`}
+                    >
+                      <span>Decision: [Standardize on PostgreSQL 16 with pgvector]</span>
+                      <span className="font-mono text-[#67E8F9] shrink-0 ml-2">[18:24]</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleVerifyDemoClick(
+                        2,
+                        '36:50',
+                        '[Marcus (DevOps)]',
+                        'For action items, I will configure the automated WAL shipping to S3 and document the failover drill by this Thursday.'
+                      )}
+                      className={`w-full flex items-center justify-between rounded-lg border p-3 text-left text-xs transition cursor-pointer ${
+                        demoActiveIndex === 2
+                          ? 'border-[#67E8F9] bg-[#67E8F9]/10 text-[#F1EFFA]'
+                          : 'border-[#2E2B45] bg-[#09090F] text-[#B3AFCB] hover:border-[#C4B5FD]'
+                      }`}
+                    >
+                      <span>Action: [Marcus] to configure WAL shipping to S3 bucket</span>
+                      <span className="font-mono text-[#67E8F9] shrink-0 ml-2">[36:50]</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleVerifyDemoClick(
+                        3,
+                        '25:30',
+                        '[Marcus (DevOps)]',
+                        'I have an open question: what is our disaster recovery RPO for the streaming replication replicas in us-west-2?'
+                      )}
+                      className={`w-full flex items-center justify-between rounded-lg border p-3 text-left text-xs transition cursor-pointer ${
+                        demoActiveIndex === 3
+                          ? 'border-[#67E8F9] bg-[#67E8F9]/10 text-[#F1EFFA]'
+                          : 'border-[#2E2B45] bg-[#09090F] text-[#B3AFCB] hover:border-[#C4B5FD]'
+                      }`}
+                    >
+                      <span>Question: [Disaster recovery RPO in target region?]</span>
+                      <span className="font-mono text-[#67E8F9] shrink-0 ml-2">[25:30]</span>
+                    </button>
+                  </div>
+
+                  <div className="rounded-xl border border-[#2E2B45] bg-[#09090F] p-4">
+                    <span className="font-mono text-[10px] uppercase text-[#B3AFCB] block mb-1.5">
+                      Grounded Transcript Line:
+                    </span>
+                    <div
+                      className={`rounded-r border-l-2 border-[#67E8F9] p-2.5 text-xs text-[#F1EFFA] leading-relaxed transition-all duration-200 ${
+                        demoFlash ? 'bg-[#67E8F9]/20' : 'bg-[#67E8F9]/[0.05]'
+                      }`}
+                    >
+                      <span className="font-mono font-semibold text-[#67E8F9] mr-1.5">
+                        {demoSpeaker}:
+                      </span>
+                      "{demoText}"
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 3: HOW IT WORKS */}
+          <section className="py-20 border-b border-[#2E2B45]" id="how-it-works">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6">
+              <div className="max-w-2xl mb-12">
+                <span className="font-mono text-xs uppercase tracking-wider text-[#67E8F9] mb-2 block">
+                  Pipeline
+                </span>
+                <h2 className="text-3xl font-bold tracking-tight text-[#F1EFFA] mb-3">
+                  How it works
+                </h2>
+                <p className="text-sm text-[#B3AFCB] leading-relaxed">
+                  Three precise stages turn raw audio or video files into validated intelligence without human bottleneck.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="rounded-xl border border-[#2E2B45] bg-white/[0.02] p-7 transition hover:border-[#C4B5FD] hover:-translate-y-1">
+                  <span className="font-mono text-2xl font-semibold text-[#C4B5FD] mb-4 block">
+                    01
+                  </span>
+                  <h3 className="text-base font-semibold text-[#F1EFFA] mb-2">
+                    Upload audio or video
+                  </h3>
+                  <p className="text-xs text-[#B3AFCB] leading-relaxed">
+                    Drop in your recording in <span className="font-mono text-[#67E8F9]">.mp3, .wav, .mp4, .webm,</span> or <span className="font-mono text-[#67E8F9]">.mov</span>. The pipeline normalizes audio to 16kHz mono WAV for high-fidelity speech recognition.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-[#2E2B45] bg-white/[0.02] p-7 transition hover:border-[#C4B5FD] hover:-translate-y-1">
+                  <span className="font-mono text-2xl font-semibold text-[#C4B5FD] mb-4 block">
+                    02
+                  </span>
+                  <h3 className="text-base font-semibold text-[#F1EFFA] mb-2">
+                    Speaker-aware transcription and topic segmentation
+                  </h3>
+                  <p className="text-xs text-[#B3AFCB] leading-relaxed">
+                    Faster-Whisper transcribes words with word-level timestamps. Semantic embeddings detect natural topical transitions before feeding structured context to the AI extraction step.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-[#2E2B45] bg-white/[0.02] p-7 transition hover:border-[#C4B5FD] hover:-translate-y-1">
+                  <span className="font-mono text-2xl font-semibold text-[#C4B5FD] mb-4 block">
+                    03
+                  </span>
+                  <h3 className="text-base font-semibold text-[#F1EFFA] mb-2">
+                    Get your chosen output with timestamp links
+                  </h3>
+                  <p className="text-xs text-[#B3AFCB] leading-relaxed">
+                    Receive your verified summary notes or validated interactive flowchart. Every item is clickable and directly tied to the exact second in the audio or video recording.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 4: BUILT DIFFERENT */}
+          <section className="py-20 border-b border-[#2E2B45]" id="features">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6">
+              <div className="max-w-2xl mb-12">
+                <span className="font-mono text-xs uppercase tracking-wider text-[#67E8F9] mb-2 block">
+                  Architecture
+                </span>
+                <h2 className="text-3xl font-bold tracking-tight text-[#F1EFFA] mb-3">
+                  Built different
+                </h2>
+                <p className="text-sm text-[#B3AFCB] leading-relaxed">
+                  Engineered from the ground up for rigor, acoustic precision, and graph validity.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="rounded-2xl border border-[#2E2B45] bg-white/[0.02] p-7 transition hover:border-[#C4B5FD] hover:-translate-y-1">
+                  <div className="h-11 w-11 rounded-xl bg-[#C4B5FD]/10 border border-[#2E2B45] flex items-center justify-center text-[#C4B5FD] mb-5">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2v20M17 5v14M7 5v14M2 9v6M22 9v6" />
+                    </svg>
+                  </div>
+                  <h3 className="text-base font-semibold text-[#F1EFFA] mb-2">
+                    Real speech ML, not just an LLM wrapper
+                  </h3>
+                  <p className="text-xs text-[#B3AFCB] leading-relaxed">
+                    Speaker-diarized transcription, plus semantic topic segmentation before the AI extraction step ensures contextual fidelity and preserves speaker attribution.
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-[#2E2B45] bg-white/[0.02] p-7 transition hover:border-[#C4B5FD] hover:-translate-y-1">
+                  <div className="h-11 w-11 rounded-xl bg-[#C4B5FD]/10 border border-[#2E2B45] flex items-center justify-center text-[#C4B5FD] mb-5">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="3" width="6" height="6" rx="1" />
+                      <rect x="15" y="3" width="6" height="6" rx="1" />
+                      <rect x="9" y="15" width="6" height="6" rx="1" />
+                      <path d="M6 9v3a3 3 0 0 0 3 3h3" />
+                      <path d="M18 9v3a3 3 0 0 1-3 3h-3" />
+                    </svg>
+                  </div>
+                  <h3 className="text-base font-semibold text-[#F1EFFA] mb-2">
+                    Diagrams that never break
+                  </h3>
+                  <p className="text-xs text-[#B3AFCB] leading-relaxed">
+                    Flowcharts are checked by an automated deterministic graph validator before they are shown. Dangling references and disconnected cycles are repaired automatically.
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-[#2E2B45] bg-white/[0.02] p-7 transition hover:border-[#C4B5FD] hover:-translate-y-1">
+                  <div className="h-11 w-11 rounded-xl bg-[#C4B5FD]/10 border border-[#2E2B45] flex items-center justify-center text-[#C4B5FD] mb-5">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                  </div>
+                  <h3 className="text-base font-semibold text-[#F1EFFA] mb-2">
+                    Search across all your past meetings and lectures
+                  </h3>
+                  <p className="text-xs text-[#B3AFCB] leading-relaxed">
+                    pgvector semantic embeddings allow natural-language querying across your entire repository of conversations, retrieving the exact timestamped discussion in milliseconds.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 5: PRIVACY & FLEXIBILITY */}
+          <section className="py-20 border-b border-[#2E2B45]" id="privacy">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+                <div className="lg:col-span-6">
+                  <span className="font-mono text-xs uppercase tracking-wider text-[#67E8F9] mb-2 block">
+                    Security & Control
+                  </span>
+                  <h2 className="text-3xl font-bold tracking-tight text-[#F1EFFA] mb-4">
+                    Privacy and flexibility
+                  </h2>
+                  <p className="text-sm text-[#B3AFCB] leading-relaxed mb-4">
+                    Choose cloud mode or local-first mode, where everything runs on your own machine, switchable by setting.
+                  </p>
+                  <p className="text-xs text-[#B3AFCB] leading-relaxed">
+                    Keep sensitive executive sessions, intellectual property, and proprietary recordings entirely on-premise with local whisper inference and self-hosted models.
+                  </p>
+                </div>
+
+                <div className="lg:col-span-6">
+                  <div className="rounded-xl border border-[#2E2B45] bg-[#09090F] p-5 font-mono text-xs text-[#F1EFFA] leading-relaxed hover:border-[#C4B5FD] transition">
+                    <span className="text-[#B3AFCB]/60"># MeetWhisper Local-First Privacy Configuration</span><br />
+                    <span className="text-[#67E8F9]">MODE</span>=<span className="text-[#C4B5FD]">local</span><br />
+                    <span className="text-[#67E8F9]">TRANSCRIBER_ENGINE</span>=<span className="text-[#C4B5FD]">faster_whisper</span><br />
+                    <span className="text-[#67E8F9]">WHISPER_DEVICE</span>=<span className="text-[#C4B5FD]">cpu</span><br />
+                    <span className="text-[#67E8F9]">LLM_PROVIDER</span>=<span className="text-[#C4B5FD]">ollama</span><br />
+                    <span className="text-[#67E8F9]">OLLAMA_MODEL</span>=<span className="text-[#C4B5FD]">llama3.2</span><br />
+                    <span className="text-[#67E8F9]">DATABASE_URL</span>=<span className="text-[#C4B5FD]">sqlite+aiosqlite:///local.db</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 6: MADE FOR */}
+          <section className="py-20 border-b border-[#2E2B45]">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6">
+              <div className="max-w-2xl mb-8">
+                <span className="font-mono text-xs uppercase tracking-wider text-[#67E8F9] mb-2 block">
+                  Versatility
+                </span>
+                <h2 className="text-3xl font-bold tracking-tight text-[#F1EFFA] mb-3">
+                  Made for
+                </h2>
+                <p className="text-sm text-[#B3AFCB] leading-relaxed">
+                  Engineered for fast-paced knowledge work across conversations and educational recordings.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                {[
+                  'Standups and sprint planning',
+                  'Architecture reviews',
+                  'College lectures',
+                  'Interviews',
+                  'Podcasts',
+                  'Research discussions'
+                ].map((chip) => (
+                  <span
+                    key={chip}
+                    className="rounded-full border border-[#2E2B45] bg-white/[0.02] px-4 py-2 font-mono text-xs text-[#F1EFFA] hover:border-[#C4B5FD] hover:text-[#C4B5FD] hover:bg-white/[0.05] transition"
+                  >
+                    {chip}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 7: FINAL CALL TO ACTION */}
+          <section className="py-24">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6">
+              <div className="rounded-2xl border border-[#2E2B45] bg-white/[0.02] px-6 py-16 sm:px-12 text-center flex flex-col items-center hover:border-[#C4B5FD] transition">
+                <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#F1EFFA] max-w-xl mb-4">
+                  Don't trust the AI blindly. Verify every insight.
+                </h2>
+                <p className="text-sm text-[#B3AFCB] max-w-md mb-8">
+                  Upload any audio or video recording and inspect timestamp-grounded summaries, action items, and validated decision flowcharts.
+                </p>
+                <button
+                  onClick={() => setIsUploadOpen(true)}
+                  className="btn-gradient"
+                >
+                  Try MeetWhisper
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 8: FOOTER */}
+          <footer className="border-t border-[#2E2B45] bg-[#09090F] py-10">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs text-[#B3AFCB]">
+              <div className="font-semibold text-[#C4B5FD]">
+                ◆ MeetWhisper
+              </div>
+              <ul className="flex items-center space-x-6">
+                <li><a href="#features" className="hover:text-[#F1EFFA] transition">Features</a></li>
+                <li><a href="#how-it-works" className="hover:text-[#F1EFFA] transition">How it works</a></li>
+                <li><a href="#privacy" className="hover:text-[#F1EFFA] transition">Privacy</a></li>
+                <li>
+                  <a
+                    href="https://github.com/nishantjadaun26/MeetWhisper"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-[#F1EFFA] transition"
+                  >
+                    GitHub
+                  </a>
+                </li>
+              </ul>
+              <div>
+                [VERIFIED_SPEECH_INTELLIGENCE]
+              </div>
+            </div>
+          </footer>
+        </main>
+      )}
 
       {/* Upload Modal */}
       <UploadModal

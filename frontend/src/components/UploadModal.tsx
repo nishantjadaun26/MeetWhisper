@@ -107,21 +107,21 @@ export const UploadModal: React.FC<UploadModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fade">
-      <div className="relative w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#0c0e14] p-6 shadow-2xl animate-slide-up">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade">
+      <div className="relative w-full max-w-md rounded-2xl border border-[#2E2B45] bg-[#09090F] p-6 shadow-2xl animate-slide-up">
         {/* Close Button */}
         {!isUploading && (
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 text-zinc-500 hover:text-white transition"
+            className="absolute right-4 top-4 text-[#B3AFCB] hover:text-[#F1EFFA] transition"
           >
             <X className="h-4 w-4" />
           </button>
         )}
 
-        <h2 className="text-sm font-semibold text-zinc-100 mb-1">Upload Recording or Video</h2>
-        <p className="text-xs text-zinc-500 mb-4">
-          Process meeting audio or video into transcripts, action items & interactive flowcharts.
+        <h2 className="text-base font-semibold text-[#F1EFFA] mb-1">Upload Recording or Video</h2>
+        <p className="text-xs text-[#B3AFCB] mb-5">
+          Process speech or video into verified summaries, structured notes & validated flowcharts.
         </p>
 
         {!isUploading ? (
@@ -131,7 +131,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/[0.12] bg-white/[0.02] p-6 text-center transition hover:border-white/[0.25] hover:bg-white/[0.04] cursor-pointer"
+              className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#2E2B45] bg-white/[0.02] p-6 text-center transition hover:border-[#C4B5FD] hover:bg-white/[0.04] cursor-pointer"
             >
               <input
                 ref={fileInputRef}
@@ -140,25 +140,25 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                 onChange={handleFileChange}
                 className="hidden"
               />
-              <div className="flex items-center space-x-2 text-zinc-400 mb-2">
+              <div className="flex items-center space-x-2 text-[#C4B5FD] mb-2">
                 {file ? (
-                  isVideoFile(file) ? <Video className="h-6 w-6 text-sky-400" /> : <Music className="h-6 w-6 text-emerald-400" />
+                  isVideoFile(file) ? <Video className="h-6 w-6 text-[#67E8F9]" /> : <Music className="h-6 w-6 text-[#C4B5FD]" />
                 ) : (
                   <UploadCloud className="h-6 w-6" />
                 )}
               </div>
-              <p className="text-xs font-medium text-zinc-200 truncate max-w-xs">
+              <p className="text-xs font-medium text-[#F1EFFA] truncate max-w-xs">
                 {file ? file.name : 'Choose file or drag & drop'}
               </p>
-              <p className="text-[10px] text-zinc-500 mt-1">
-                Audio (MP3, WAV, M4A) or Video (MP4, WEBM, MOV, MKV) up to 250MB
+              <p className="text-[11px] font-mono text-[#B3AFCB] mt-1">
+                .mp3 · .wav · .mp4 · .mov · .webm
               </p>
             </div>
 
             {/* Output Choice Selector */}
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-                Output Generation
+              <label className="block text-xs font-medium text-[#B3AFCB] mb-1.5 font-mono">
+                Choose Output Mode
               </label>
               <div className="grid grid-cols-3 gap-2">
                 <button
@@ -166,13 +166,13 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                   onClick={() => setOutputMode('notes')}
                   className={`flex flex-col items-center justify-center rounded-lg border p-2.5 text-center transition ${
                     outputMode === 'notes'
-                      ? 'border-sky-500/50 bg-sky-500/10 text-white'
-                      : 'border-white/[0.06] bg-white/[0.02] text-zinc-400 hover:border-white/[0.15] hover:text-zinc-200'
+                      ? 'border-[#67E8F9] bg-[#67E8F9]/10 text-[#F1EFFA]'
+                      : 'border-[#2E2B45] bg-white/[0.02] text-[#B3AFCB] hover:border-[#C4B5FD] hover:text-[#F1EFFA]'
                   }`}
                 >
-                  <FileText className="h-4 w-4 mb-1" />
-                  <span className="text-[11px] font-medium">Notes Only</span>
-                  <span className="text-[9px] text-zinc-500">Summary & tasks</span>
+                  <FileText className="h-4 w-4 mb-1 text-[#67E8F9]" />
+                  <span className="text-[11px] font-semibold">Notes Only</span>
+                  <span className="text-[9px] text-[#B3AFCB]">Summary & tasks</span>
                 </button>
 
                 <button
@@ -180,13 +180,13 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                   onClick={() => setOutputMode('flowchart')}
                   className={`flex flex-col items-center justify-center rounded-lg border p-2.5 text-center transition ${
                     outputMode === 'flowchart'
-                      ? 'border-sky-500/50 bg-sky-500/10 text-white'
-                      : 'border-white/[0.06] bg-white/[0.02] text-zinc-400 hover:border-white/[0.15] hover:text-zinc-200'
+                      ? 'border-[#C4B5FD] bg-[#C4B5FD]/10 text-[#F1EFFA]'
+                      : 'border-[#2E2B45] bg-white/[0.02] text-[#B3AFCB] hover:border-[#C4B5FD] hover:text-[#F1EFFA]'
                   }`}
                 >
-                  <GitBranch className="h-4 w-4 mb-1" />
-                  <span className="text-[11px] font-medium">Flowchart Only</span>
-                  <span className="text-[9px] text-zinc-500">Visual decision map</span>
+                  <GitBranch className="h-4 w-4 mb-1 text-[#C4B5FD]" />
+                  <span className="text-[11px] font-semibold">Flowchart</span>
+                  <span className="text-[9px] text-[#B3AFCB]">Decision graph</span>
                 </button>
 
                 <button
@@ -194,20 +194,20 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                   onClick={() => setOutputMode('both')}
                   className={`flex flex-col items-center justify-center rounded-lg border p-2.5 text-center transition ${
                     outputMode === 'both'
-                      ? 'border-sky-500/50 bg-sky-500/10 text-white'
-                      : 'border-white/[0.06] bg-white/[0.02] text-zinc-400 hover:border-white/[0.15] hover:text-zinc-200'
+                      ? 'border-[#C4B5FD] bg-[#C4B5FD]/10 text-[#F1EFFA]'
+                      : 'border-[#2E2B45] bg-white/[0.02] text-[#B3AFCB] hover:border-[#C4B5FD] hover:text-[#F1EFFA]'
                   }`}
                 >
-                  <Layers className="h-4 w-4 mb-1" />
-                  <span className="text-[11px] font-medium">Both</span>
-                  <span className="text-[9px] text-zinc-500">Complete suite</span>
+                  <Layers className="h-4 w-4 mb-1 text-[#C4B5FD]" />
+                  <span className="text-[11px] font-semibold">Both</span>
+                  <span className="text-[9px] text-[#B3AFCB]">Complete suite</span>
                 </button>
               </div>
             </div>
 
             {/* Title Input */}
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1">
+              <label className="block text-xs font-medium text-[#B3AFCB] mb-1 font-mono">
                 Title (Optional)
               </label>
               <input
@@ -215,7 +215,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                 placeholder="e.g. Q4 Architecture Review"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-md border border-white/[0.08] bg-black/30 px-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 transition focus:border-sky-500/60 focus:outline-none"
+                className="w-full rounded-md border border-[#2E2B45] bg-black/40 px-3 py-1.5 text-xs text-[#F1EFFA] placeholder-[#B3AFCB]/40 transition focus:border-[#C4B5FD] focus:outline-none font-mono"
               />
             </div>
 
@@ -231,7 +231,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-md px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-white transition"
+                className="rounded-md px-3 py-1.5 text-xs font-medium text-[#B3AFCB] hover:text-[#F1EFFA] transition font-mono"
               >
                 Cancel
               </button>
@@ -239,9 +239,9 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                 type="button"
                 onClick={handleStartUpload}
                 disabled={!file}
-                className="rounded-md border border-white/[0.15] bg-white/[0.08] px-4 py-1.5 text-xs font-medium text-white hover:bg-white/[0.15] transition active:scale-[0.98] disabled:opacity-40"
+                className="btn-gradient !h-9 !px-4 !text-xs disabled:opacity-40"
               >
-                Process
+                Process Recording
               </button>
             </div>
           </div>
@@ -250,20 +250,20 @@ export const UploadModal: React.FC<UploadModalProps> = ({
           <div className="space-y-4 py-3 animate-fade">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-sky-400" />
-                <span className="text-xs font-medium text-zinc-300">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-[#67E8F9]" />
+                <span className="text-xs font-medium text-[#F1EFFA]">
                   {jobProgress ? STAGE_LABELS[jobProgress.status] || jobProgress.status : 'Initializing...'}
                 </span>
               </div>
-              <span className="font-mono text-xs text-zinc-400">
+              <span className="font-mono text-xs text-[#67E8F9]">
                 {jobProgress?.progress_percent || 0}%
               </span>
             </div>
 
             {/* Progress bar */}
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#2E2B45]">
               <div
-                className="h-full bg-sky-400 transition-all duration-300 ease-out"
+                className="h-full bg-[#67E8F9] transition-all duration-300 ease-out"
                 style={{ width: `${jobProgress?.progress_percent || 0}%` }}
               />
             </div>
@@ -281,19 +281,19 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                     key={stage}
                     className={`flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs transition ${
                       isCurrent
-                        ? 'text-white font-medium bg-white/[0.04]'
+                        ? 'text-[#F1EFFA] font-medium bg-white/[0.04]'
                         : isDone
-                        ? 'text-zinc-400'
-                        : 'text-zinc-600'
+                        ? 'text-[#B3AFCB]'
+                        : 'text-[#B3AFCB]/40'
                     }`}
                   >
                     <span>{STAGE_LABELS[stage]}</span>
                     {isDone ? (
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                      <CheckCircle2 className="h-3.5 w-3.5 text-[#67E8F9]" />
                     ) : isCurrent ? (
-                      <Loader2 className="h-3 w-3 animate-spin text-sky-400" />
+                      <Loader2 className="h-3 w-3 animate-spin text-[#C4B5FD]" />
                     ) : (
-                      <span className="h-1 w-1 rounded-full bg-zinc-700" />
+                      <span className="h-1 w-1 rounded-full bg-[#2E2B45]" />
                     )}
                   </div>
                 );

@@ -39,78 +39,95 @@ interface GraphCanvasProps {
 }
 
 const TYPE_BADGES: Record<NodeType, { label: string; text: string; bg: string }> = {
-  root: { label: 'Root', text: 'text-zinc-200', bg: 'bg-white/[0.08]' },
-  decision: { label: 'Decision', text: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-  action: { label: 'Action', text: 'text-sky-400', bg: 'bg-sky-500/10' },
-  question: { label: 'Question', text: 'text-amber-400', bg: 'bg-amber-500/10' },
-  insight: { label: 'Insight', text: 'text-purple-400', bg: 'bg-purple-500/10' },
-  milestone: { label: 'Milestone', text: 'text-pink-400', bg: 'bg-pink-500/10' },
-  topic: { label: 'Topic', text: 'text-zinc-400', bg: 'bg-white/[0.04]' },
-  subtopic: { label: 'Subtopic', text: 'text-zinc-400', bg: 'bg-white/[0.04]' },
+  root: { label: 'Root', text: 'text-[#C4B5FD]', bg: 'bg-[#C4B5FD]/10 border border-[#C4B5FD]/30' },
+  decision: { label: 'Decision', text: 'text-[#67E8F9]', bg: 'bg-[#67E8F9]/10 border border-[#67E8F9]/30' },
+  action: { label: 'Action', text: 'text-[#67E8F9]', bg: 'bg-[#67E8F9]/10 border border-[#67E8F9]/30' },
+  question: { label: 'Question', text: 'text-[#C4B5FD]', bg: 'bg-[#C4B5FD]/10 border border-[#C4B5FD]/30' },
+  insight: { label: 'Insight', text: 'text-[#C4B5FD]', bg: 'bg-[#C4B5FD]/10 border border-[#C4B5FD]/30' },
+  milestone: { label: 'Milestone', text: 'text-[#67E8F9]', bg: 'bg-[#67E8F9]/10 border border-[#67E8F9]/30' },
+  topic: { label: 'Topic', text: 'text-[#B3AFCB]', bg: 'bg-white/[0.04] border border-[#2E2B45]' },
+  subtopic: { label: 'Subtopic', text: 'text-[#B3AFCB]', bg: 'bg-white/[0.04] border border-[#2E2B45]' },
 };
 
 // Custom Minimal React Flow Node
-const CustomMeetingNode: React.FC<NodeProps<MeetingNodeType>> = ({ data }) => {
-  const nodeType: NodeType = data.node_type || 'topic';
-  const badge = TYPE_BADGES[nodeType] || TYPE_BADGES.topic;
+const MeetingNode: React.FC<NodeProps<MeetingNodeType>> = ({ data }) => {
+  const badge = TYPE_BADGES[data.node_type] || TYPE_BADGES.topic;
 
   return (
     <div
       onClick={() => data.onSeek(data.timestamp_start)}
-      className="group relative flex min-w-[210px] max-w-[260px] cursor-pointer flex-col rounded-xl border border-white/[0.08] bg-[#0c0e14] p-3 shadow-md transition-all duration-200 hover:border-white/[0.2] hover:bg-[#11141d] active:scale-[0.99]"
+      className="group relative flex w-60 flex-col rounded-xl border border-[#2E2B45] bg-[#09090F] p-3 shadow-md transition-all duration-200 hover:border-[#C4B5FD] hover:shadow-xl cursor-pointer"
     >
-      <Handle type="target" position={Position.Left} className="!bg-zinc-500 !w-1.5 !h-1.5 !border-0" />
+      <Handle
+        type="target"
+        position={Position.Top}
+        className="!h-2 !w-2 !rounded-full !border-2 !border-[#09090F] !bg-[#C4B5FD]"
+      />
 
-      {/* Header */}
       <div className="flex items-center justify-between mb-1.5">
-        <span className={`rounded px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider ${badge.text} ${badge.bg}`}>
+        <span
+          className={`rounded px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider ${badge.bg} ${badge.text}`}
+        >
           {badge.label}
         </span>
+
         <button
           onClick={(e) => {
             e.stopPropagation();
             data.onSeek(data.timestamp_start);
           }}
-          className="flex items-center space-x-1 font-mono text-[10px] text-zinc-500 hover:text-sky-400 transition"
-          title="Seek audio"
+          className="flex items-center space-x-1 font-mono text-[10px] text-[#67E8F9] hover:underline"
+          title="Seek audio/video"
         >
           <Clock className="h-2.5 w-2.5" />
           <span>{formatTime(data.timestamp_start)}</span>
         </button>
       </div>
 
-      {/* Label */}
-      <p className="text-xs font-medium leading-snug text-zinc-200">{data.label}</p>
+      <p className="text-xs font-medium text-[#F1EFFA] leading-snug line-clamp-2 group-hover:text-white transition">
+        {data.label}
+      </p>
 
-      {/* Speaker */}
       {data.speaker && (
-        <span className="mt-1.5 font-mono text-[10px] text-zinc-500">
+        <span className="mt-2 text-[10px] font-mono text-[#B3AFCB] truncate">
           {data.speaker}
         </span>
       )}
 
-      <Handle type="source" position={Position.Right} className="!bg-zinc-500 !w-1.5 !h-1.5 !border-0" />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!h-2 !w-2 !rounded-full !border-2 !border-[#09090F] !bg-[#67E8F9]"
+      />
     </div>
   );
 };
 
 const nodeTypes = {
-  meetingNode: CustomMeetingNode,
+  meetingNode: MeetingNode,
 };
 
-function getLayoutedElements(nodes: any[], edges: any[], direction = 'LR') {
+// Dagre Layout Calculator
+const nodeWidth = 260;
+const nodeHeight = 110;
+
+function getLayoutedElements(
+  nodes: Node[],
+  edges: any[],
+  direction = 'LR'
+) {
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
 
   const isHorizontal = direction === 'LR';
   dagreGraph.setGraph({
     rankdir: direction,
-    nodesep: 35,
+    nodesep: 40,
     ranksep: 70,
   });
 
   nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: 230, height: 100 });
+    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
   });
 
   edges.forEach((edge) => {
@@ -126,8 +143,8 @@ function getLayoutedElements(nodes: any[], edges: any[], direction = 'LR') {
       targetPosition: isHorizontal ? Position.Left : Position.Top,
       sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
       position: {
-        x: nodeWithPosition.x - 115,
-        y: nodeWithPosition.y - 50,
+        x: nodeWithPosition.x - nodeWidth / 2,
+        y: nodeWithPosition.y - nodeHeight / 2,
       },
     };
   });
@@ -167,9 +184,9 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       label: e.label || undefined,
       type: 'smoothstep',
       animated: false,
-      style: { stroke: '#3f3f46', strokeWidth: 1.5 },
-      labelStyle: { fill: '#71717a', fontSize: 10, fontFamily: 'monospace' },
-      labelBgStyle: { fill: '#0c0e14', fillOpacity: 0.9 },
+      style: { stroke: '#2E2B45', strokeWidth: 1.5 },
+      labelStyle: { fill: '#B3AFCB', fontSize: 10, fontFamily: 'monospace' },
+      labelBgStyle: { fill: '#09090F', fillOpacity: 0.9 },
       labelBgPadding: [4, 2] as [number, number],
       labelBgBorderRadius: 4,
     }));
@@ -197,19 +214,19 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
 
   if (!hasNodes) {
     return (
-      <div className="flex h-full flex-col items-center justify-center p-8 text-center animate-fade rounded-xl border border-white/[0.06] bg-[#08090d]">
-        <div className="h-10 w-10 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-400 mb-3">
-          <GitBranch className="h-5 w-5 text-sky-400" />
+      <div className="flex h-full flex-col items-center justify-center p-8 text-center animate-fade rounded-xl border border-[#2E2B45] bg-[#09090F]">
+        <div className="h-10 w-10 rounded-full bg-white/[0.04] border border-[#2E2B45] flex items-center justify-center text-[#B3AFCB] mb-3">
+          <GitBranch className="h-5 w-5 text-[#C4B5FD]" />
         </div>
-        <h3 className="text-xs font-semibold text-zinc-200 mb-1">Visual Flowchart Not Generated</h3>
-        <p className="text-[11px] text-zinc-500 max-w-xs mb-4">
+        <h3 className="text-xs font-semibold text-[#F1EFFA] mb-1">Visual Flowchart Not Generated</h3>
+        <p className="text-[11px] text-[#B3AFCB] max-w-xs mb-4">
           You chose Notes Only during upload. You can synthesize a visual decision flowchart on demand.
         </p>
         {onGenerateFlowchart && (
           <button
             onClick={onGenerateFlowchart}
             disabled={isGenerating}
-            className="flex items-center space-x-1.5 rounded-lg border border-sky-500/30 bg-sky-500/10 px-3.5 py-1.5 text-xs font-medium text-sky-300 hover:bg-sky-500/20 transition active:scale-95 disabled:opacity-50"
+            className="flex items-center space-x-1.5 rounded-lg border border-[#C4B5FD]/30 bg-[#C4B5FD]/10 px-3.5 py-1.5 text-xs font-medium text-[#C4B5FD] hover:bg-[#C4B5FD]/20 transition active:scale-95 disabled:opacity-50"
           >
             {isGenerating ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -224,12 +241,12 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   }
 
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-xl border border-white/[0.06] bg-[#08090d] animate-slide-up">
+    <div className="relative h-full w-full overflow-hidden rounded-xl border border-[#2E2B45] bg-[#09090F] animate-slide-up">
       {/* Top Floating Controls */}
-      <div className="absolute right-3 top-3 z-10 flex items-center space-x-1.5 rounded-lg border border-white/[0.08] bg-[#0c0e14]/90 p-1 backdrop-blur shadow-sm">
+      <div className="absolute right-3 top-3 z-10 flex items-center space-x-1.5 rounded-lg border border-[#2E2B45] bg-[#09090F]/90 p-1 backdrop-blur shadow-sm">
         <button
           onClick={() => setDirection(direction === 'LR' ? 'TB' : 'LR')}
-          className="rounded px-2 py-0.5 font-mono text-[11px] text-zinc-400 hover:text-white transition"
+          className="rounded px-2 py-0.5 font-mono text-[11px] text-[#B3AFCB] hover:text-[#F1EFFA] transition"
           title="Toggle orientation"
         >
           {direction === 'LR' ? 'Horizontal →' : 'Vertical ↓'}
@@ -247,12 +264,12 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         minZoom={0.25}
         maxZoom={1.75}
       >
-        <Background color="#1f232e" gap={20} size={1} variant={BackgroundVariant.Dots} />
-        <Controls className="!bg-[#0c0e14] !border-white/[0.08] !text-zinc-400 fill-zinc-400 rounded-lg overflow-hidden shadow-sm" />
+        <Background color="#2E2B45" gap={20} size={1} variant={BackgroundVariant.Dots} />
+        <Controls className="!bg-[#09090F] !border-[#2E2B45] !text-[#B3AFCB] fill-[#B3AFCB] rounded-lg overflow-hidden shadow-sm" />
         <MiniMap
-          nodeColor="#3f3f46"
-          className="!bg-[#0c0e14]/90 !border-white/[0.08] !rounded-lg"
-          maskColor="rgba(8, 9, 13, 0.75)"
+          nodeColor="#2E2B45"
+          className="!bg-[#09090F]/90 !border-[#2E2B45] !rounded-lg"
+          maskColor="rgba(9, 9, 15, 0.75)"
         />
       </ReactFlow>
     </div>

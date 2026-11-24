@@ -40,38 +40,38 @@ export const TranscriptViewer: React.FC<TranscriptViewerProps> = ({
   );
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-white/[0.06] bg-[#0c0e14]">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[#2E2B45] bg-[#09090F]">
       {/* Header & Search */}
-      <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+      <div className="flex items-center justify-between border-b border-[#2E2B45] px-4 py-3">
         <div className="flex items-center space-x-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#B3AFCB] font-mono">
             Transcript
           </span>
-          <span className="font-mono text-[11px] text-zinc-600">
+          <span className="font-mono text-[11px] text-[#B3AFCB]/50">
             ({segments.length})
           </span>
         </div>
 
         <div className="flex items-center space-x-2">
           <div className="relative">
-            <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-zinc-500" />
+            <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-[#B3AFCB]/40" />
             <input
               type="text"
               placeholder="Find in transcript..."
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
-              className="h-7 w-36 rounded-md border border-white/[0.06] bg-black/40 pl-8 pr-2.5 text-xs text-zinc-200 placeholder-zinc-500 transition focus:border-sky-500/60 focus:outline-none"
+              className="h-7 w-36 rounded-md border border-[#2E2B45] bg-black/40 pl-8 pr-2 text-xs text-[#F1EFFA] placeholder-[#B3AFCB]/40 transition focus:w-48 focus:border-[#C4B5FD] focus:outline-none font-mono"
             />
           </div>
 
           <button
             onClick={() => setAutoScroll(!autoScroll)}
-            className={`flex items-center space-x-1 rounded-md px-2 py-1 text-[11px] font-medium transition ${
+            className={`flex items-center space-x-1 rounded-md px-2 py-1 text-[11px] font-mono transition border ${
               autoScroll
-                ? 'bg-white/[0.08] text-zinc-200'
-                : 'text-zinc-500 hover:text-zinc-300'
+                ? 'border-[#C4B5FD]/40 bg-[#C4B5FD]/10 text-[#C4B5FD]'
+                : 'border-[#2E2B45] text-[#B3AFCB]/60 hover:text-[#B3AFCB]'
             }`}
-            title="Auto-scroll with playback"
+            title="Auto-scroll to current speaker"
           >
             <ArrowDown className="h-3 w-3" />
             <span>Follow</span>
@@ -79,39 +79,47 @@ export const TranscriptViewer: React.FC<TranscriptViewerProps> = ({
         </div>
       </div>
 
-      {/* Segments list */}
-      <div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+      {/* Segments List */}
+      <div ref={containerRef} className="flex-1 overflow-y-auto p-3 space-y-2">
         {filteredSegments.length === 0 ? (
-          <div className="flex h-40 items-center justify-center text-xs text-zinc-600">
-            No matching segments
+          <div className="flex h-full items-center justify-center text-xs text-[#B3AFCB]/50">
+            {segments.length === 0 ? 'No transcript segments' : 'No matching results'}
           </div>
         ) : (
-          filteredSegments.map((segment, idx) => {
-            const isActive = idx === activeSegmentIndex;
+          filteredSegments.map((segment) => {
+            const isActive =
+              currentTime >= segment.start_time && currentTime <= segment.end_time;
 
             return (
               <div
-                key={segment.id || idx}
+                key={segment.id}
                 ref={isActive ? activeSegmentRef : null}
                 onClick={() => onSeek(segment.start_time)}
-                className={`group relative cursor-pointer rounded-lg px-3 py-2.5 transition-all duration-200 ${
+                className={`group cursor-pointer rounded-lg border p-3 transition-all duration-150 ${
                   isActive
-                    ? 'border-l-2 border-sky-400 bg-white/[0.04] pl-3.5 shadow-sm'
-                    : 'border-l-2 border-transparent hover:bg-white/[0.02]'
+                    ? 'border-[#67E8F9] bg-[#67E8F9]/[0.06] shadow-sm'
+                    : 'border-[#2E2B45]/60 bg-white/[0.015] hover:border-[#C4B5FD]/60 hover:bg-white/[0.04]'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-zinc-300">
-                    {segment.speaker}
-                  </span>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center space-x-2">
+                    <span
+                      className={`text-xs font-semibold ${
+                        isActive ? 'text-[#67E8F9]' : 'text-[#C4B5FD]'
+                      }`}
+                    >
+                      {segment.speaker}
+                    </span>
+                  </div>
 
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onSeek(segment.start_time);
                     }}
-                    className="flex items-center space-x-1 font-mono text-[10px] text-zinc-500 opacity-80 transition hover:text-sky-400 group-hover:opacity-100"
-                    title="Seek audio"
+                    className={`flex items-center space-x-1 font-mono text-[10px] transition ${
+                      isActive ? 'text-[#67E8F9]' : 'text-[#B3AFCB]/60 group-hover:text-[#67E8F9]'
+                    }`}
                   >
                     <Clock className="h-2.5 w-2.5" />
                     <span>{formatTime(segment.start_time)}</span>
@@ -119,8 +127,8 @@ export const TranscriptViewer: React.FC<TranscriptViewerProps> = ({
                 </div>
 
                 <p
-                  className={`text-xs leading-relaxed transition-colors ${
-                    isActive ? 'text-zinc-100 font-normal' : 'text-zinc-400'
+                  className={`text-xs leading-relaxed transition ${
+                    isActive ? 'text-[#F1EFFA]' : 'text-[#B3AFCB]'
                   }`}
                 >
                   {segment.text}
