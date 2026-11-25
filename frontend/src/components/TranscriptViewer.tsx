@@ -40,27 +40,27 @@ export const TranscriptViewer: React.FC<TranscriptViewerProps> = ({
   );
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[#2E2B45] bg-[#09090F]">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel-bg)]">
       {/* Header & Search */}
-      <div className="flex items-center justify-between border-b border-[#2E2B45] px-4 py-3">
+      <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
         <div className="flex items-center space-x-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#B3AFCB] font-mono">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] font-mono">
             Transcript
           </span>
-          <span className="font-mono text-[11px] text-[#B3AFCB]/50">
+          <span className="font-mono text-[11px] text-[var(--text-secondary)]/50">
             ({segments.length})
           </span>
         </div>
 
         <div className="flex items-center space-x-2">
           <div className="relative">
-            <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-[#B3AFCB]/40" />
+            <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-[var(--text-secondary)]/40" />
             <input
               type="text"
               placeholder="Find in transcript..."
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
-              className="h-7 w-36 rounded-md border border-[#2E2B45] bg-black/40 pl-8 pr-2 text-xs text-[#F1EFFA] placeholder-[#B3AFCB]/40 transition focus:w-48 focus:border-[#C4B5FD] focus:outline-none font-mono"
+              className="h-7 w-36 rounded-md border border-[var(--border)] bg-[var(--input-bg)] pl-8 pr-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-secondary)]/40 transition focus:w-48 focus:border-[var(--accent-violet)] focus:outline-none font-mono"
             />
           </div>
 
@@ -68,8 +68,8 @@ export const TranscriptViewer: React.FC<TranscriptViewerProps> = ({
             onClick={() => setAutoScroll(!autoScroll)}
             className={`flex items-center space-x-1 rounded-md px-2 py-1 text-[11px] font-mono transition border ${
               autoScroll
-                ? 'border-[#C4B5FD]/40 bg-[#C4B5FD]/10 text-[#C4B5FD]'
-                : 'border-[#2E2B45] text-[#B3AFCB]/60 hover:text-[#B3AFCB]'
+                ? 'border-[var(--accent-violet)]/40 bg-[var(--accent-violet)]/10 text-[var(--accent-violet)]'
+                : 'border-[var(--border)] text-[var(--text-secondary)]/60 hover:text-[var(--text-secondary)]'
             }`}
             title="Auto-scroll to current speaker"
           >
@@ -82,7 +82,7 @@ export const TranscriptViewer: React.FC<TranscriptViewerProps> = ({
       {/* Segments List */}
       <div ref={containerRef} className="flex-1 overflow-y-auto p-3 space-y-2">
         {filteredSegments.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-xs text-[#B3AFCB]/50">
+          <div className="flex h-full items-center justify-center text-xs text-[var(--text-secondary)]/50">
             {segments.length === 0 ? 'No speech detected in this recording' : 'No matching results'}
           </div>
         ) : (
@@ -97,15 +97,15 @@ export const TranscriptViewer: React.FC<TranscriptViewerProps> = ({
                 onClick={() => onSeek(segment.start_time)}
                 className={`group cursor-pointer rounded-lg border p-3 transition-all duration-150 ${
                   isActive
-                    ? 'border-[#67E8F9] bg-[#67E8F9]/[0.06] shadow-sm'
-                    : 'border-[#2E2B45]/60 bg-white/[0.015] hover:border-[#C4B5FD]/60 hover:bg-white/[0.04]'
+                    ? 'border-[var(--accent-cyan)] bg-[var(--accent-cyan)]/[0.08] shadow-sm'
+                    : 'border-[var(--border)]/70 bg-[var(--card-bg)] hover:border-[var(--accent-violet)]/70 hover:bg-[var(--card-hover-bg)]'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center space-x-2">
                     <span
                       className={`text-xs font-semibold ${
-                        isActive ? 'text-[#67E8F9]' : 'text-[#C4B5FD]'
+                        isActive ? 'text-[var(--accent-cyan)]' : 'text-[var(--accent-violet)]'
                       }`}
                     >
                       {segment.speaker}
@@ -118,7 +118,7 @@ export const TranscriptViewer: React.FC<TranscriptViewerProps> = ({
                       onSeek(segment.start_time);
                     }}
                     className={`flex items-center space-x-1 font-mono text-[10px] transition ${
-                      isActive ? 'text-[#67E8F9]' : 'text-[#B3AFCB]/60 group-hover:text-[#67E8F9]'
+                      isActive ? 'text-[var(--accent-cyan)]' : 'text-[var(--text-secondary)]/60 group-hover:text-[var(--accent-cyan)]'
                     }`}
                   >
                     <Clock className="h-2.5 w-2.5" />
@@ -128,7 +128,7 @@ export const TranscriptViewer: React.FC<TranscriptViewerProps> = ({
 
                 <p
                   className={`text-xs leading-relaxed transition ${
-                    isActive ? 'text-[#F1EFFA]' : 'text-[#B3AFCB]'
+                    isActive ? 'text-[var(--text-primary)] font-medium' : 'text-[var(--text-secondary)]'
                   }`}
                 >
                   {segment.text}

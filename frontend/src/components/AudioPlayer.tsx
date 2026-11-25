@@ -47,7 +47,7 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
 
       const ws = WaveSurfer.create({
         container: containerRef.current,
-        waveColor: '#2E2B45',
+        waveColor: 'rgba(167, 139, 250, 0.3)',
         progressColor: '#67E8F9',
         cursorColor: '#C4B5FD',
         cursorWidth: 1.5,
@@ -126,11 +126,11 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
     };
 
     return (
-      <div className="flex flex-col rounded-xl border border-white/[0.06] bg-[#0c0e14] p-3.5 transition-all">
+      <div className="flex flex-col rounded-xl border border-[var(--border)] bg-[var(--panel-bg)] p-3.5 transition-all">
         {/* Waveform area */}
         <div className="relative mb-2.5 w-full">
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-[#0c0e14]/80 text-[11px] text-zinc-400 font-mono">
+            <div className="absolute inset-0 flex items-center justify-center bg-[var(--panel-bg)]/80 text-[11px] text-[var(--text-secondary)] font-mono">
               Loading waveform...
             </div>
           )}
@@ -144,7 +144,7 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
             <button
               onClick={togglePlayPause}
               disabled={isLoading}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-zinc-950 hover:bg-zinc-200 active:scale-95 transition-all disabled:opacity-40"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-violet)] text-[var(--bg)] hover:brightness-110 active:scale-95 transition-all disabled:opacity-40"
               title={isPlaying ? 'Pause' : 'Play'}
             >
               {isPlaying ? <Pause className="h-3.5 w-3.5 fill-current" /> : <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />}
@@ -153,23 +153,23 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
             {/* Skip Buttons */}
             <button
               onClick={() => handleSkip(-5)}
-              className="p-1 text-zinc-400 hover:text-white transition"
+              className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
               title="Back 5s"
             >
               <RotateCcw className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => handleSkip(5)}
-              className="p-1 text-zinc-400 hover:text-white transition"
+              className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
               title="Forward 5s"
             >
               <RotateCw className="h-3.5 w-3.5" />
             </button>
 
             {/* Timers */}
-            <div className="font-mono text-[11px] text-zinc-400 pl-1">
-              <span className="text-zinc-200">{formatTime(currentTime)}</span>
-              <span className="mx-1 text-zinc-600">/</span>
+            <div className="font-mono text-[11px] text-[var(--text-secondary)] pl-1">
+              <span className="text-[var(--text-primary)]">{formatTime(currentTime)}</span>
+              <span className="mx-1 text-[var(--border)]">/</span>
               <span>{formatTime(totalDuration)}</span>
             </div>
           </div>
@@ -178,7 +178,7 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
             {/* Speed toggle */}
             <button
               onClick={handleRateChange}
-              className="rounded border border-white/[0.08] px-2 py-0.5 font-mono text-[11px] text-zinc-400 hover:border-white/[0.2] hover:text-zinc-200 transition"
+              className="rounded border border-[var(--border)] px-2 py-0.5 font-mono text-[11px] text-[var(--accent-violet)] hover:border-[var(--accent-violet)] hover:text-[var(--text-primary)] transition"
               title="Playback speed"
             >
               {playbackRate}x
@@ -188,7 +188,7 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
             <div className="flex items-center space-x-1.5">
               <button
                 onClick={toggleMute}
-                className="text-zinc-400 hover:text-zinc-200 transition"
+                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
                 title={isMuted ? 'Unmute' : 'Mute'}
               >
                 {isMuted || volume === 0 ? <VolumeX className="h-3.5 w-3.5 text-red-400" /> : <Volume2 className="h-3.5 w-3.5" />}
@@ -200,7 +200,7 @@ export const AudioPlayer = forwardRef<AudioPlayerHandle, AudioPlayerProps>(
                 step="0.05"
                 value={isMuted ? 0 : volume}
                 onChange={handleVolumeChange}
-                className="h-1 w-14 cursor-pointer appearance-none rounded-lg bg-zinc-800 accent-zinc-200"
+                className="h-1 w-14 cursor-pointer appearance-none rounded-lg bg-[var(--border)] accent-[var(--accent-cyan)]"
               />
             </div>
           </div>

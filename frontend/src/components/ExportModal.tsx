@@ -107,19 +107,19 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade">
-      <div className="relative flex h-[580px] w-full max-w-2xl flex-col rounded-2xl border border-[#2E2B45] bg-[#09090F] p-6 shadow-2xl animate-slide-up">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade">
+      <div className="relative flex h-[580px] w-full max-w-2xl flex-col rounded-2xl border border-[var(--border)] bg-[var(--panel-bg)] p-6 shadow-2xl animate-slide-up text-[var(--text-primary)]">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-[#2E2B45]">
+        <div className="flex items-center justify-between pb-4 border-b border-[var(--border)]">
           <div>
-            <h2 className="text-base font-semibold text-[#F1EFFA]">Export Session Intelligence</h2>
-            <p className="text-xs text-[#B3AFCB]">
+            <h2 className="text-base font-semibold text-[var(--text-primary)]">Export Session Intelligence</h2>
+            <p className="text-xs text-[var(--text-secondary)]">
               Copy or download verified notes, Mermaid flowcharts, or raw JSON.
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-[#B3AFCB] hover:text-[#F1EFFA] transition"
+            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
           >
             <X className="h-4 w-4" />
           </button>
@@ -127,13 +127,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
         {/* Tab Selector */}
         <div className="flex items-center justify-between py-3">
-          <div className="flex space-x-1 rounded-lg border border-[#2E2B45] bg-black/40 p-1">
+          <div className="flex space-x-1 rounded-lg border border-[var(--border)] bg-[var(--subtle-fill)] p-1">
             <button
               onClick={() => setActiveTab('markdown')}
               className={`rounded-md px-3 py-1 font-mono text-xs transition ${
                 activeTab === 'markdown'
-                  ? 'bg-white/[0.1] text-[#F1EFFA] font-medium border border-[#C4B5FD]/40'
-                  : 'text-[#B3AFCB] hover:text-[#F1EFFA]'
+                  ? 'bg-[var(--card-hover-bg)] text-[var(--text-primary)] font-medium border border-[var(--accent-violet)]/40 shadow-sm'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               Markdown (.md)
@@ -142,8 +142,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               onClick={() => setActiveTab('mermaid')}
               className={`rounded-md px-3 py-1 font-mono text-xs transition ${
                 activeTab === 'mermaid'
-                  ? 'bg-white/[0.1] text-[#F1EFFA] font-medium border border-[#C4B5FD]/40'
-                  : 'text-[#B3AFCB] hover:text-[#F1EFFA]'
+                  ? 'bg-[var(--card-hover-bg)] text-[var(--text-primary)] font-medium border border-[var(--accent-violet)]/40 shadow-sm'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               Mermaid (.mmd)
@@ -152,8 +152,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               onClick={() => setActiveTab('json')}
               className={`rounded-md px-3 py-1 font-mono text-xs transition ${
                 activeTab === 'json'
-                  ? 'bg-white/[0.1] text-[#F1EFFA] font-medium border border-[#C4B5FD]/40'
-                  : 'text-[#B3AFCB] hover:text-[#F1EFFA]'
+                  ? 'bg-[var(--card-hover-bg)] text-[var(--text-primary)] font-medium border border-[var(--accent-violet)]/40 shadow-sm'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               Raw JSON
@@ -163,9 +163,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           <div className="flex items-center space-x-2">
             <button
               onClick={handleCopy}
-              className="flex items-center space-x-1.5 rounded-md border border-[#2E2B45] bg-white/[0.03] px-3 py-1 text-xs text-[#F1EFFA] hover:bg-white/[0.08] transition font-mono"
+              className="flex items-center space-x-1.5 rounded-md border border-[var(--border)] bg-[var(--subtle-fill)] px-3 py-1 text-xs text-[var(--text-primary)] hover:bg-[var(--card-hover-bg)] transition font-mono"
             >
-              {copied ? <Check className="h-3.5 w-3.5 text-[#67E8F9]" /> : <Copy className="h-3.5 w-3.5" />}
+              {copied ? <Check className="h-3.5 w-3.5 text-[var(--accent-cyan)]" /> : <Copy className="h-3.5 w-3.5" />}
               <span>{copied ? 'Copied' : 'Copy'}</span>
             </button>
             <button
@@ -179,11 +179,11 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         </div>
 
         {/* Code Content Box */}
-        <div className="flex-1 overflow-hidden rounded-xl border border-[#2E2B45] bg-black/60 p-4">
+        <div className="flex-1 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--input-bg)] p-4">
           <textarea
             readOnly
             value={content}
-            className="h-full w-full resize-none bg-transparent font-mono text-xs text-[#B3AFCB] focus:outline-none selection:bg-[#67E8F9]/20 selection:text-[#67E8F9]"
+            className="h-full w-full resize-none bg-transparent font-mono text-xs text-[var(--text-secondary)] focus:outline-none selection:bg-[var(--accent-cyan)]/20 selection:text-[var(--accent-cyan)]"
           />
         </div>
       </div>

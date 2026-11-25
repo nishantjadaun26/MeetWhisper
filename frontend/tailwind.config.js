@@ -8,12 +8,15 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: '#09090F',
-        textPrimary: '#F1EFFA',
-        textSecondary: '#B3AFCB',
-        accentViolet: '#C4B5FD',
-        accentCyan: '#67E8F9',
-        borderCustom: '#2E2B45',
+        bg: 'var(--bg)',
+        panelBg: 'var(--panel-bg)',
+        cardBg: 'var(--card-bg)',
+        cardHoverBg: 'var(--card-hover-bg)',
+        textPrimary: 'var(--text-primary)',
+        textSecondary: 'var(--text-secondary)',
+        accentViolet: 'var(--accent-violet)',
+        accentCyan: 'var(--accent-cyan)',
+        borderCustom: 'var(--border)',
       },
       fontFamily: {
         sans: ['Sora', 'system-ui', 'sans-serif'],

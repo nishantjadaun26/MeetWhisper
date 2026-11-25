@@ -2,8 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+:root, :root.dark {
   --bg: #09090F;
+  --panel-bg: #09090F;
+  --card-bg: rgba(255, 255, 255, 0.02);
+  --card-hover-bg: rgba(255, 255, 255, 0.04);
   --text-primary: #F1EFFA;
   --text-secondary: #B3AFCB;
   --accent-violet: #C4B5FD;
@@ -11,9 +14,38 @@
   --border: #2E2B45;
   --subtle-fill: rgba(255, 255, 255, 0.03);
   --sig-gradient: linear-gradient(90deg, #C4B5FD, #67E8F9);
+  --hero-glow-1: rgba(167, 139, 250, 0.38);
+  --hero-glow-2: rgba(34, 211, 238, 0.22);
+  --hero-grid: rgba(167, 139, 250, 0.07);
+  --nav-bg: rgba(9, 9, 15, 0.9);
+  --input-bg: rgba(0, 0, 0, 0.4);
+  --btn-text: #09090F;
 
   font-family: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color-scheme: dark;
+}
+
+:root.light {
+  --bg: #F7F6FB;
+  --panel-bg: #FFFFFF;
+  --card-bg: #FFFFFF;
+  --card-hover-bg: #F1EFF8;
+  --text-primary: #14121F;
+  --text-secondary: #64748B;
+  --accent-violet: #6366F1;
+  --accent-cyan: #0284C7;
+  --border: #E2E8F0;
+  --subtle-fill: rgba(0, 0, 0, 0.03);
+  --sig-gradient: linear-gradient(90deg, #6366F1, #0284C7);
+  --hero-glow-1: rgba(99, 102, 241, 0.15);
+  --hero-glow-2: rgba(2, 132, 199, 0.12);
+  --hero-grid: rgba(99, 102, 241, 0.05);
+  --nav-bg: rgba(247, 246, 251, 0.92);
+  --input-bg: #FFFFFF;
+  --btn-text: #FFFFFF;
+
+  font-family: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: light;
 }
 
 body {
@@ -38,21 +70,21 @@ code, kbd, samp, pre, .font-mono {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2E2B45;
+  background: var(--border);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #C4B5FD;
+  background: var(--accent-violet);
 }
 
 /* Hero Background Grid & Glows */
 .hero-glow-bg {
   background-color: var(--bg);
   background-image: 
-    radial-gradient(circle at 88% 12%, rgba(167, 139, 250, 0.38) 0%, rgba(9, 9, 15, 0) 55%),
-    radial-gradient(circle at 10% 88%, rgba(34, 211, 238, 0.22) 0%, rgba(9, 9, 15, 0) 50%),
-    linear-gradient(to right, rgba(167, 139, 250, 0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(167, 139, 250, 0.07) 1px, transparent 1px);
+    radial-gradient(circle at 88% 12%, var(--hero-glow-1) 0%, transparent 55%),
+    radial-gradient(circle at 10% 88%, var(--hero-glow-2) 0%, transparent 50%),
+    linear-gradient(to right, var(--hero-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--hero-grid) 1px, transparent 1px);
   background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
   background-position: 0 0, 0 0, 0 0, 0 0;
 }
@@ -71,7 +103,7 @@ code, kbd, samp, pre, .font-mono {
   align-items: center;
   justify-content: center;
   background: var(--sig-gradient);
-  color: #09090F;
+  color: var(--btn-text);
   font-family: 'Sora', sans-serif;
   font-weight: 600;
   font-size: 14px;
@@ -179,6 +211,21 @@ code, kbd, samp, pre, .font-mono {
 
 .animate-fade {
   animation: fadeIn 0.2s ease-out forwards;
+}
+
+/* React Flow theme integration */
+.react-flow__controls-button {
+  background-color: var(--panel-bg) !important;
+  border-bottom-color: var(--border) !important;
+  color: var(--text-secondary) !important;
+  fill: currentColor !important;
+}
+.react-flow__controls-button:hover {
+  background-color: var(--card-hover-bg) !important;
+  color: var(--text-primary) !important;
+}
+.react-flow__minimap {
+  background-color: var(--panel-bg) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

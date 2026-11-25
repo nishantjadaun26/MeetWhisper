@@ -107,20 +107,20 @@ export const UploadModal: React.FC<UploadModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade">
-      <div className="relative w-full max-w-md rounded-2xl border border-[#2E2B45] bg-[#09090F] p-6 shadow-2xl animate-slide-up">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade">
+      <div className="relative w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--panel-bg)] p-6 shadow-2xl animate-slide-up text-[var(--text-primary)]">
         {/* Close Button */}
         {!isUploading && (
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 text-[#B3AFCB] hover:text-[#F1EFFA] transition"
+            className="absolute right-4 top-4 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
           >
             <X className="h-4 w-4" />
           </button>
         )}
 
-        <h2 className="text-base font-semibold text-[#F1EFFA] mb-1">Upload Recording or Video</h2>
-        <p className="text-xs text-[#B3AFCB] mb-5">
+        <h2 className="text-base font-semibold text-[var(--text-primary)] mb-1">Upload Recording or Video</h2>
+        <p className="text-xs text-[var(--text-secondary)] mb-5">
           Process speech or video into verified summaries, structured notes & validated flowcharts.
         </p>
 
@@ -131,7 +131,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#2E2B45] bg-white/[0.02] p-6 text-center transition hover:border-[#C4B5FD] hover:bg-white/[0.04] cursor-pointer"
+              className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--border)] bg-[var(--subtle-fill)] p-6 text-center transition hover:border-[var(--accent-violet)] hover:bg-[var(--card-hover-bg)] cursor-pointer"
             >
               <input
                 ref={fileInputRef}
@@ -140,24 +140,24 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                 onChange={handleFileChange}
                 className="hidden"
               />
-              <div className="flex items-center space-x-2 text-[#C4B5FD] mb-2">
+              <div className="flex items-center space-x-2 text-[var(--accent-violet)] mb-2">
                 {file ? (
-                  isVideoFile(file) ? <Video className="h-6 w-6 text-[#67E8F9]" /> : <Music className="h-6 w-6 text-[#C4B5FD]" />
+                  isVideoFile(file) ? <Video className="h-6 w-6 text-[var(--accent-cyan)]" /> : <Music className="h-6 w-6 text-[var(--accent-violet)]" />
                 ) : (
                   <UploadCloud className="h-6 w-6" />
                 )}
               </div>
-              <p className="text-xs font-medium text-[#F1EFFA] truncate max-w-xs">
+              <p className="text-xs font-medium text-[var(--text-primary)] truncate max-w-xs">
                 {file ? file.name : 'Choose file or drag & drop'}
               </p>
-              <p className="text-[11px] font-mono text-[#B3AFCB] mt-1">
+              <p className="text-[11px] font-mono text-[var(--text-secondary)] mt-1">
                 .mp3 · .wav · .mp4 · .mov · .webm
               </p>
             </div>
 
             {/* Output Choice Selector */}
             <div>
-              <label className="block text-xs font-medium text-[#B3AFCB] mb-1.5 font-mono">
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 font-mono">
                 Choose Output Mode
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -166,13 +166,13 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                   onClick={() => setOutputMode('notes')}
                   className={`flex flex-col items-center justify-center rounded-lg border p-2.5 text-center transition ${
                     outputMode === 'notes'
-                      ? 'border-[#67E8F9] bg-[#67E8F9]/10 text-[#F1EFFA]'
-                      : 'border-[#2E2B45] bg-white/[0.02] text-[#B3AFCB] hover:border-[#C4B5FD] hover:text-[#F1EFFA]'
+                      ? 'border-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10 text-[var(--text-primary)] shadow-sm'
+                      : 'border-[var(--border)] bg-[var(--subtle-fill)] text-[var(--text-secondary)] hover:border-[var(--accent-violet)] hover:text-[var(--text-primary)]'
                   }`}
                 >
-                  <FileText className="h-4 w-4 mb-1 text-[#67E8F9]" />
+                  <FileText className="h-4 w-4 mb-1 text-[var(--accent-cyan)]" />
                   <span className="text-[11px] font-semibold">Notes Only</span>
-                  <span className="text-[9px] text-[#B3AFCB]">Summary & tasks</span>
+                  <span className="text-[9px] text-[var(--text-secondary)]">Summary & tasks</span>
                 </button>
 
                 <button
@@ -180,13 +180,13 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                   onClick={() => setOutputMode('flowchart')}
                   className={`flex flex-col items-center justify-center rounded-lg border p-2.5 text-center transition ${
                     outputMode === 'flowchart'
-                      ? 'border-[#C4B5FD] bg-[#C4B5FD]/10 text-[#F1EFFA]'
-                      : 'border-[#2E2B45] bg-white/[0.02] text-[#B3AFCB] hover:border-[#C4B5FD] hover:text-[#F1EFFA]'
+                      ? 'border-[var(--accent-violet)] bg-[var(--accent-violet)]/10 text-[var(--text-primary)] shadow-sm'
+                      : 'border-[var(--border)] bg-[var(--subtle-fill)] text-[var(--text-secondary)] hover:border-[var(--accent-violet)] hover:text-[var(--text-primary)]'
                   }`}
                 >
-                  <GitBranch className="h-4 w-4 mb-1 text-[#C4B5FD]" />
+                  <GitBranch className="h-4 w-4 mb-1 text-[var(--accent-violet)]" />
                   <span className="text-[11px] font-semibold">Flowchart</span>
-                  <span className="text-[9px] text-[#B3AFCB]">Decision graph</span>
+                  <span className="text-[9px] text-[var(--text-secondary)]">Decision graph</span>
                 </button>
 
                 <button
@@ -194,20 +194,20 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                   onClick={() => setOutputMode('both')}
                   className={`flex flex-col items-center justify-center rounded-lg border p-2.5 text-center transition ${
                     outputMode === 'both'
-                      ? 'border-[#C4B5FD] bg-[#C4B5FD]/10 text-[#F1EFFA]'
-                      : 'border-[#2E2B45] bg-white/[0.02] text-[#B3AFCB] hover:border-[#C4B5FD] hover:text-[#F1EFFA]'
+                      ? 'border-[var(--accent-violet)] bg-[var(--accent-violet)]/10 text-[var(--text-primary)] shadow-sm'
+                      : 'border-[var(--border)] bg-[var(--subtle-fill)] text-[var(--text-secondary)] hover:border-[var(--accent-violet)] hover:text-[var(--text-primary)]'
                   }`}
                 >
-                  <Layers className="h-4 w-4 mb-1 text-[#C4B5FD]" />
+                  <Layers className="h-4 w-4 mb-1 text-[var(--accent-violet)]" />
                   <span className="text-[11px] font-semibold">Both</span>
-                  <span className="text-[9px] text-[#B3AFCB]">Complete suite</span>
+                  <span className="text-[9px] text-[var(--text-secondary)]">Complete suite</span>
                 </button>
               </div>
             </div>
 
             {/* Title Input */}
             <div>
-              <label className="block text-xs font-medium text-[#B3AFCB] mb-1 font-mono">
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1 font-mono">
                 Title (Optional)
               </label>
               <input
@@ -215,7 +215,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                 placeholder="e.g. Q4 Architecture Review"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-md border border-[#2E2B45] bg-black/40 px-3 py-1.5 text-xs text-[#F1EFFA] placeholder-[#B3AFCB]/40 transition focus:border-[#C4B5FD] focus:outline-none font-mono"
+                className="w-full rounded-md border border-[var(--border)] bg-[var(--input-bg)] px-3 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-secondary)]/40 transition focus:border-[var(--accent-violet)] focus:outline-none font-mono"
               />
             </div>
 

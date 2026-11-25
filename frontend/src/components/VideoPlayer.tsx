@@ -145,7 +145,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
     return (
       <div
         ref={containerRef}
-        className="group relative flex flex-col overflow-hidden rounded-xl border border-[#2E2B45] bg-[#09090F]"
+        className="group relative flex flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel-bg)]"
       >
         {/* Video Canvas */}
         <div
@@ -175,7 +175,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
         </div>
 
         {/* Video Controls Bar */}
-        <div className="flex flex-col space-y-2 p-3 bg-[#09090F] border-t border-[#2E2B45]">
+        <div className="flex flex-col space-y-2 p-3 bg-[var(--panel-bg)] border-t border-[var(--border)]">
           {/* Progress Slider */}
           <div className="relative flex items-center">
             <input
@@ -185,9 +185,9 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
               step={0.1}
               value={currentTime}
               onChange={handleSeek}
-              className="h-1 w-full cursor-pointer appearance-none rounded-full bg-[#2E2B45] accent-[#67E8F9] focus:outline-none"
+              className="h-1 w-full cursor-pointer appearance-none rounded-full bg-[var(--border)] accent-[var(--accent-cyan)] focus:outline-none"
               style={{
-                background: `linear-gradient(to right, #67E8F9 ${progressPercent}%, #2E2B45 ${progressPercent}%)`,
+                background: `linear-gradient(to right, var(--accent-cyan) ${progressPercent}%, var(--border) ${progressPercent}%)`,
               }}
             />
           </div>
@@ -198,34 +198,34 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
               <button
                 onClick={() => handleSkip(-5)}
                 title="Rewind 5s"
-                className="rounded p-1 text-[#B3AFCB] hover:text-[#F1EFFA] transition"
+                className="rounded p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
               </button>
 
               <button
                 onClick={togglePlayPause}
-                className="flex h-7 w-7 items-center justify-center rounded-md bg-white/[0.06] text-[#F1EFFA] hover:bg-white/[0.12] transition active:scale-95 border border-[#2E2B45]"
+                className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--subtle-fill)] text-[var(--text-primary)] hover:bg-[var(--card-hover-bg)] transition active:scale-95 border border-[var(--border)]"
               >
                 {isPlaying ? (
                   <Pause className="h-3.5 w-3.5" />
                 ) : (
-                  <Play className="ml-0.5 h-3.5 w-3.5 fill-[#F1EFFA]" />
+                  <Play className="ml-0.5 h-3.5 w-3.5 fill-[var(--text-primary)]" />
                 )}
               </button>
 
               <button
                 onClick={() => handleSkip(5)}
                 title="Forward 5s"
-                className="rounded p-1 text-[#B3AFCB] hover:text-[#F1EFFA] transition"
+                className="rounded p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
               >
                 <RotateCw className="h-3.5 w-3.5" />
               </button>
 
               {/* Time Indicator */}
-              <div className="ml-2 font-mono text-[11px] text-[#B3AFCB]">
-                <span className="text-[#67E8F9] font-medium">{formatTime(currentTime)}</span>
-                <span className="text-[#2E2B45] mx-1">/</span>
+              <div className="ml-2 font-mono text-[11px] text-[var(--text-secondary)]">
+                <span className="text-[var(--accent-cyan)] font-medium">{formatTime(currentTime)}</span>
+                <span className="text-[var(--border)] mx-1">/</span>
                 <span>{formatTime(duration)}</span>
               </div>
             </div>
@@ -235,7 +235,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
               {/* Playback Speed Pill */}
               <button
                 onClick={handleSpeedChange}
-                className="rounded border border-[#2E2B45] bg-white/[0.02] px-1.5 py-0.5 font-mono text-[10px] text-[#C4B5FD] hover:text-[#F1EFFA] hover:border-[#C4B5FD] transition"
+                className="rounded border border-[var(--border)] bg-[var(--subtle-fill)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--accent-violet)] hover:text-[var(--text-primary)] hover:border-[var(--accent-violet)] transition"
               >
                 {playbackRate}x
               </button>
@@ -244,7 +244,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
               <div className="flex items-center space-x-1.5">
                 <button
                   onClick={toggleMute}
-                  className="rounded p-1 text-[#B3AFCB] hover:text-[#F1EFFA] transition"
+                  className="rounded p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
                 >
                   {isMuted || volume === 0 ? (
                     <VolumeX className="h-3.5 w-3.5" />
@@ -259,7 +259,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
                   step={0.05}
                   value={isMuted ? 0 : volume}
                   onChange={handleVolumeChange}
-                  className="h-1 w-14 cursor-pointer appearance-none rounded-full bg-[#2E2B45] accent-[#67E8F9] focus:outline-none"
+                  className="h-1 w-14 cursor-pointer appearance-none rounded-full bg-[var(--border)] accent-[var(--accent-cyan)] focus:outline-none"
                 />
               </div>
 
@@ -267,7 +267,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
               <button
                 onClick={toggleFullscreen}
                 title="Toggle Fullscreen"
-                className="rounded p-1 text-[#B3AFCB] hover:text-[#F1EFFA] transition"
+                className="rounded p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
               >
                 <Maximize2 className="h-3.5 w-3.5" />
               </button>
