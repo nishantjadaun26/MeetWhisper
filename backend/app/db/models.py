@@ -24,7 +24,10 @@ class User(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    hashed_password: Mapped[str] = mapped_column(String(512), nullable=False)
+    hashed_password: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    auth_provider: Mapped[str] = mapped_column(String(50), nullable=False, default="local")
+    google_sub: Mapped[Optional[str]] = mapped_column(String(255), unique=True, nullable=True)
+    avatar_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)

@@ -358,17 +358,26 @@ export default function App() {
 
             {currentUser ? (
               <div className="flex items-center space-x-2 rounded-lg border border-[var(--border)] bg-[var(--subtle-fill)] pl-2 pr-1.5 py-1">
-                <div
-                  className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--accent-violet)]/20 font-mono text-[10px] font-bold text-[var(--accent-violet)]"
-                  title={currentUser.email}
-                >
-                  {currentUser.full_name
-                    .split(' ')
-                    .map((p) => p[0])
-                    .join('')
-                    .slice(0, 2)
-                    .toUpperCase()}
-                </div>
+                {currentUser.avatar_url ? (
+                  <img
+                    src={currentUser.avatar_url}
+                    alt={currentUser.full_name}
+                    title={currentUser.email}
+                    className="h-6 w-6 rounded-md object-cover border border-[var(--border)]"
+                  />
+                ) : (
+                  <div
+                    className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--accent-violet)]/20 font-mono text-[10px] font-bold text-[var(--accent-violet)]"
+                    title={currentUser.email}
+                  >
+                    {currentUser.full_name
+                      .split(' ')
+                      .map((p) => p[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  </div>
+                )}
                 <span className="hidden md:inline text-xs font-medium text-[var(--text-primary)] max-w-[110px] truncate">
                   {currentUser.full_name.split(' ')[0]}
                 </span>

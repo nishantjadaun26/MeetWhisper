@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     # Auth & JWT Settings
     SECRET_KEY: str = "meetwhisper-dev-secret-key-change-in-production-2026"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
+    GOOGLE_CLIENT_ID: str = ""
 
     UPLOAD_DIR: str = "./uploads"
     MAX_UPLOAD_SIZE_MB: int = 250

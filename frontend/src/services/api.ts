@@ -1,5 +1,5 @@
 import { Meeting, MeetingDetail, JobProgress, SearchResultItem } from '../types/meeting';
-import { AuthResponse, LoginPayload, RegisterPayload, User } from '../types/auth';
+import { AuthResponse, AuthProvidersConfig, LoginPayload, RegisterPayload, User } from '../types/auth';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const TOKEN_KEY = 'mw-auth-token';
@@ -71,6 +71,29 @@ export async function logoutUser(): Promise<void> {
   } finally {
     clearAuthToken();
   }
+}
+
+export async function fetchAuthProviders(): Promise<AuthProvidersConfig> {
+  const res = await fetch(`${API_BASE}/api/auth/providers`);
+  if (!res.ok) {
+    return { google_enabled: false, google_client_id: null };
+  }
+  return res.json();
+}
+
+export async function loginWithGoogle(idToken: string): Promise<AuthResponse> {
+  const res = await fetch(`${API_BASE}/api/auth/google`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id_token: idToken }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Google Sign-In failed');
+  }
+  const data: AuthResponse = await res.json();
+  setAuthToken(data.access_token);
+  return data;
 }
 
 export async function fetchMeetings(): Promise<Meeting[]> {

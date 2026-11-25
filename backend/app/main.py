@@ -25,6 +25,15 @@ async def lifespan(app: FastAPI):
             if "user_id" not in cols:
                 await conn.execute(text("ALTER TABLE meetings ADD COLUMN user_id VARCHAR(36)"))
 
+            user_res = await conn.execute(text("PRAGMA table_info(users)"))
+            user_cols = [row[1] for row in user_res.fetchall()]
+            if "auth_provider" not in user_cols:
+                await conn.execute(text("ALTER TABLE users ADD COLUMN auth_provider VARCHAR(50) NOT NULL DEFAULT 'local'"))
+            if "google_sub" not in user_cols:
+                await conn.execute(text("ALTER TABLE users ADD COLUMN google_sub VARCHAR(255)"))
+            if "avatar_url" not in user_cols:
+                await conn.execute(text("ALTER TABLE users ADD COLUMN avatar_url VARCHAR(512)"))
+
     yield
 
     await engine.dispose()

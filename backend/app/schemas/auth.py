@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
 EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -37,10 +38,16 @@ class UserLoginRequest(BaseModel):
         return v.strip().lower()
 
 
+class GoogleAuthRequest(BaseModel):
+    id_token: str = Field(..., min_length=10)
+
+
 class UserResponse(BaseModel):
     id: str
     email: str
     full_name: str
+    auth_provider: str = "local"
+    avatar_url: Optional[str] = None
     is_active: bool
     created_at: datetime
 
