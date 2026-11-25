@@ -442,7 +442,7 @@ export default function App() {
                 /* SPLIT SCREEN: FLOWCHART + NOTES SIMULTANEOUSLY */
                 <div key="studio-split" className="grid grid-cols-1 lg:grid-cols-2 flex-1 overflow-hidden p-3 gap-3 animate-fade">
                   {/* Left Half: Flowchart */}
-                  <div className="h-full w-full overflow-hidden">
+                  <div className="h-full min-h-[360px] w-full overflow-hidden">
                     <GraphCanvas
                       graph={currentMeeting.analysis?.graph_json || { nodes: [], edges: [] }}
                       graphType={currentMeeting.analysis?.graph_type}
