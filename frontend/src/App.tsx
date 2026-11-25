@@ -405,7 +405,7 @@ export default function App() {
             selectedMeetingId={selectedMeetingId}
             onSelectMeeting={(id) => loadMeetingDetail(id)}
             onDeleteMeeting={handleDeleteMeeting}
-            onNewMeetingClick={() => setIsUploadOpen(true)}
+            onNewMeetingClick={handleUploadTrigger}
             onGoHome={() => setViewMode('home')}
           />
 
@@ -690,7 +690,7 @@ export default function App() {
                   Upload an audio or video file to extract transcripts, action items, and interactive flowcharts.
                 </p>
                 <button
-                  onClick={() => setIsUploadOpen(true)}
+                  onClick={handleUploadTrigger}
                   className="btn-gradient !h-9 !px-4 !text-xs !rounded-lg"
                 >
                   <Plus className="h-3.5 w-3.5 mr-1" />
@@ -728,13 +728,13 @@ export default function App() {
 
                   <div className="flex flex-wrap items-center gap-3.5 w-full">
                     <button
-                      onClick={() => setIsUploadOpen(true)}
+                      onClick={handleUploadTrigger}
                       className="btn-gradient"
                     >
                       Try MeetWhisper
                     </button>
                     <button
-                      onClick={() => setIsUploadOpen(true)}
+                      onClick={handleUploadTrigger}
                       className="btn-mono-box cursor-pointer"
                     >
                       Upload .mp3 · .wav · .mp4 · .mov
@@ -1363,7 +1363,7 @@ export default function App() {
                   Upload any audio or video recording and inspect timestamp-grounded summaries, action items, and validated decision flowcharts.
                 </p>
                 <button
-                  onClick={() => setIsUploadOpen(true)}
+                  onClick={handleUploadTrigger}
                   className="btn-gradient"
                 >
                   Try MeetWhisper
