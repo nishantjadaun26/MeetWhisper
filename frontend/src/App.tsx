@@ -5,9 +5,13 @@ import {
   deleteMeeting,
   getAudioUrl,
   generateArtifact,
-  subscribeJobProgress
+  subscribeJobProgress,
+  fetchCurrentUser,
+  logoutUser,
+  getAuthToken
 } from './services/api';
 import { Meeting, MeetingDetail } from './types/meeting';
+import { User } from './types/auth';
 import { Sidebar } from './components/Sidebar';
 import { AudioPlayer, AudioPlayerHandle } from './components/AudioPlayer';
 import { VideoPlayer, VideoPlayerHandle } from './components/VideoPlayer';
@@ -16,6 +20,7 @@ import { StructuredSummary } from './components/StructuredSummary';
 import { GraphCanvas } from './components/GraphCanvas';
 import { UploadModal } from './components/UploadModal';
 import { ExportModal } from './components/ExportModal';
+import { AuthModal } from './components/AuthModal';
 import { Logo } from './components/Logo';
 import { formatTime } from './utils/format';
 import {
@@ -30,7 +35,9 @@ import {
   ArrowRight,
   Sun,
   Moon,
-  Columns2
+  Columns2,
+  LogIn,
+  LogOut
 } from 'lucide-react';
 
 export default function App() {
@@ -41,6 +48,11 @@ export default function App() {
   const [studioLayout, setStudioLayout] = useState<'notes' | 'flowchart' | 'split'>('notes');
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [authPromptReason, setAuthPromptReason] = useState<string | null>(null);
+  const [pendingUploadAfterAuth, setPendingUploadAfterAuth] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingArtifact, setIsGeneratingArtifact] = useState(false);
   const [mediaViewMode, setMediaViewMode] = useState<'video' | 'waveform'>('video');
@@ -119,8 +131,43 @@ export default function App() {
   };
 
   useEffect(() => {
-    loadMeetings();
+    const initAuthAndData = async () => {
+      if (getAuthToken()) {
+        try {
+          const user = await fetchCurrentUser();
+          setCurrentUser(user);
+        } catch {
+          setCurrentUser(null);
+        }
+      }
+      await loadMeetings();
+    };
+    initAuthAndData();
   }, []);
+
+  const openAuthModal = (mode: 'login' | 'register' = 'login', reason: string | null = null) => {
+    setAuthMode(mode);
+    setAuthPromptReason(reason);
+    setIsAuthOpen(true);
+  };
+
+  const handleUploadTrigger = () => {
+    if (!currentUser) {
+      setPendingUploadAfterAuth(true);
+      openAuthModal('login', 'Sign in or create an account to upload and save your recordings.');
+      return;
+    }
+    setIsUploadOpen(true);
+  };
+
+  const handleLogout = async () => {
+    await logoutUser();
+    setCurrentUser(null);
+    setSelectedMeetingId(undefined);
+    setCurrentMeeting(null);
+    setViewMode('home');
+    await loadMeetings();
+  };
 
   const handleSeek = (time: number) => {
     setCurrentTime(time);
@@ -302,12 +349,47 @@ export default function App() {
             )}
 
             <button
-              onClick={() => setIsUploadOpen(true)}
+              onClick={handleUploadTrigger}
               className="btn-gradient !h-9 !px-4 !text-xs !rounded-lg"
             >
               <Plus className="mr-1 h-3.5 w-3.5" />
               <span>Upload Recording</span>
             </button>
+
+            {currentUser ? (
+              <div className="flex items-center space-x-2 rounded-lg border border-[var(--border)] bg-[var(--subtle-fill)] pl-2 pr-1.5 py-1">
+                <div
+                  className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--accent-violet)]/20 font-mono text-[10px] font-bold text-[var(--accent-violet)]"
+                  title={currentUser.email}
+                >
+                  {currentUser.full_name
+                    .split(' ')
+                    .map((p) => p[0])
+                    .join('')
+                    .slice(0, 2)
+                    .toUpperCase()}
+                </div>
+                <span className="hidden md:inline text-xs font-medium text-[var(--text-primary)] max-w-[110px] truncate">
+                  {currentUser.full_name.split(' ')[0]}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  title="Sign out"
+                  aria-label="Sign out"
+                  className="rounded p-1 text-[var(--text-secondary)] hover:text-red-400 hover:bg-[var(--card-hover-bg)] transition"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => openAuthModal('login', null)}
+                className="flex h-9 items-center space-x-1.5 rounded-lg border border-[var(--border)] bg-[var(--subtle-fill)] px-3 text-xs font-mono text-[var(--text-primary)] hover:border-[var(--accent-violet)] hover:bg-[var(--card-hover-bg)] transition whitespace-nowrap cursor-pointer"
+              >
+                <LogIn className="h-3.5 w-3.5 text-[var(--accent-cyan)]" />
+                <span>Sign In</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -1332,6 +1414,26 @@ export default function App() {
           meeting={currentMeeting}
         />
       )}
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        initialMode={authMode}
+        isDark={theme === 'dark'}
+        promptReason={authPromptReason}
+        onClose={() => {
+          setIsAuthOpen(false);
+          setPendingUploadAfterAuth(false);
+        }}
+        onAuthSuccess={async (user) => {
+          setCurrentUser(user);
+          await loadMeetings();
+          if (pendingUploadAfterAuth) {
+            setPendingUploadAfterAuth(false);
+            setIsUploadOpen(true);
+          }
+        }}
+      />
     </div>
   );
 }

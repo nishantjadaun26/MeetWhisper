@@ -2,6 +2,7 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from app.config import get_settings
 from app.db.base import Base
 from app.db.session import engine
@@ -19,6 +20,10 @@ async def lifespan(app: FastAPI):
     if "sqlite" in str(engine.url):
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+            res = await conn.execute(text("PRAGMA table_info(meetings)"))
+            cols = [row[1] for row in res.fetchall()]
+            if "user_id" not in cols:
+                await conn.execute(text("ALTER TABLE meetings ADD COLUMN user_id VARCHAR(36)"))
 
     yield
 

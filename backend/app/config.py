@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     FRONTEND_PORT: int = 5173
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173"
 
+    # Auth & JWT Settings
+    SECRET_KEY: str = "meetwhisper-dev-secret-key-change-in-production-2026"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
+
     UPLOAD_DIR: str = "./uploads"
     MAX_UPLOAD_SIZE_MB: int = 250
 

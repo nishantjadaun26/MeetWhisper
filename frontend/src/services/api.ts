@@ -1,15 +1,90 @@
 import { Meeting, MeetingDetail, JobProgress, SearchResultItem } from '../types/meeting';
+import { AuthResponse, LoginPayload, RegisterPayload, User } from '../types/auth';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const TOKEN_KEY = 'mw-auth-token';
+
+export function getAuthToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setAuthToken(token: string): void {
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearAuthToken(): void {
+  localStorage.removeItem(TOKEN_KEY);
+}
+
+function authHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  const token = getAuthToken();
+  return token ? { ...extra, Authorization: `Bearer ${token}` } : extra;
+}
+
+export async function registerUser(payload: RegisterPayload): Promise<AuthResponse> {
+  const res = await fetch(`${API_BASE}/api/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Registration failed');
+  }
+  const data: AuthResponse = await res.json();
+  setAuthToken(data.access_token);
+  return data;
+}
+
+export async function loginUser(payload: LoginPayload): Promise<AuthResponse> {
+  const res = await fetch(`${API_BASE}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Invalid email or password');
+  }
+  const data: AuthResponse = await res.json();
+  setAuthToken(data.access_token);
+  return data;
+}
+
+export async function fetchCurrentUser(): Promise<User> {
+  const res = await fetch(`${API_BASE}/api/auth/me`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) {
+    clearAuthToken();
+    throw new Error('Session expired');
+  }
+  return res.json();
+}
+
+export async function logoutUser(): Promise<void> {
+  try {
+    await fetch(`${API_BASE}/api/auth/logout`, {
+      method: 'POST',
+      headers: authHeaders(),
+    });
+  } finally {
+    clearAuthToken();
+  }
+}
 
 export async function fetchMeetings(): Promise<Meeting[]> {
-  const res = await fetch(`${API_BASE}/api/meetings`);
+  const res = await fetch(`${API_BASE}/api/meetings`, {
+    headers: authHeaders(),
+  });
   if (!res.ok) throw new Error('Failed to fetch meetings');
   return res.json();
 }
 
 export async function fetchMeetingDetail(id: string): Promise<MeetingDetail> {
-  const res = await fetch(`${API_BASE}/api/meetings/${id}`);
+  const res = await fetch(`${API_BASE}/api/meetings/${id}`, {
+    headers: authHeaders(),
+  });
   if (!res.ok) throw new Error('Failed to fetch meeting details');
   return res.json();
 }
@@ -28,6 +103,7 @@ export async function uploadMeetingAudio(
 
   const res = await fetch(`${API_BASE}/api/meetings/upload`, {
     method: 'POST',
+    headers: authHeaders(),
     body: formData,
   });
 
@@ -45,7 +121,7 @@ export async function generateArtifact(
 ): Promise<{ job_id: string; meeting_id: string; mode: string }> {
   const res = await fetch(`${API_BASE}/api/meetings/${meetingId}/generate`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ mode }),
   });
 
@@ -60,12 +136,15 @@ export async function generateArtifact(
 export async function deleteMeeting(id: string): Promise<void> {
   const res = await fetch(`${API_BASE}/api/meetings/${id}`, {
     method: 'DELETE',
+    headers: authHeaders(),
   });
   if (!res.ok) throw new Error('Failed to delete meeting');
 }
 
 export async function searchMeetings(query: string): Promise<SearchResultItem[]> {
-  const res = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(query)}`);
+  const res = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(query)}`, {
+    headers: authHeaders(),
+  });
   if (!res.ok) throw new Error('Failed to search');
   const data = await res.json();
   return data.results || [];
