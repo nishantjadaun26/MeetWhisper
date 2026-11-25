@@ -48,11 +48,18 @@ frontend/dist/
 uploads/
 backend/uploads/
 *.wav
+.hf_cache/
+.torch_cache/
+*.db
+
 *.mp3
 *.mp4
 *.m4a
 *.webm
 *.ogg
+*.db
+*.sqlite
+*.sqlite3
 
 # IDEs & OS
 .vscode/

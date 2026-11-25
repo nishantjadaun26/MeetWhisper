@@ -35,6 +35,7 @@ settings = get_settings()
 async def upload_meeting(
     file: UploadFile = File(...),
     title: Optional[str] = Form(None),
+    output_mode: Optional[str] = Form("both"),  # 'flowchart' | 'notes' | 'both'
     db: AsyncSession = Depends(get_db)
 ):
     if not file.filename:
@@ -43,17 +44,18 @@ async def upload_meeting(
     if not is_supported_audio_extension(file.filename):
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported file format '{file.filename}'. Allowed: mp3, wav, m4a, mp4, webm, ogg, flac, aac"
+            detail=f"Unsupported file format '{file.filename}'. Allowed: mp3, wav, m4a, mp4, webm, mov, mkv, avi, ogg, flac, aac"
         )
 
     # Save to disk
     meeting_title = title.strip() if title and title.strip() else os.path.splitext(file.filename)[0].replace("_", " ").title()
+    mime = file.content_type or mimetypes.guess_type(file.filename)[0] or "audio/mpeg"
     meeting = Meeting(
         title=meeting_title,
         filename=file.filename,
         file_path="",
         file_size_bytes=0,
-        mime_type=file.content_type or mimetypes.guess_type(file.filename)[0] or "audio/mpeg",
+        mime_type=mime,
         duration_seconds=0.0
     )
     db.add(meeting)
@@ -81,20 +83,24 @@ async def upload_meeting(
     meeting.duration_seconds = duration
 
     # Create Initial Job
+    mode = (output_mode or "both").lower()
+    if mode not in ("flowchart", "notes", "both"):
+        mode = "both"
+
     job = Job(
         meeting_id=meeting.id,
         status="queued",
         progress_percent=0,
-        stage_message="Job queued for processing"
+        stage_message=f"Job queued for processing ({mode} mode)"
     )
     db.add(job)
     await db.commit()
     await db.refresh(meeting)
     await db.refresh(job)
 
-    # Trigger processing pipeline hook (in Phase 3 wired to Celery or async worker)
+    # Trigger processing pipeline hook
     from app.worker.pipeline import trigger_meeting_processing
-    trigger_meeting_processing(job.id, meeting.id)
+    trigger_meeting_processing(job.id, meeting.id, output_mode=mode)
 
     return {
         "meeting_id": meeting.id,
@@ -103,8 +109,41 @@ async def upload_meeting(
         "filename": meeting.filename,
         "file_size_bytes": meeting.file_size_bytes,
         "duration_seconds": meeting.duration_seconds,
+        "output_mode": mode,
         "status": job.status
     }
+
+
+@router.post("/{meeting_id}/generate")
+async def generate_artifact_on_demand(
+    meeting_id: str,
+    body: dict,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Allows generating flowchart, notes, or both on-demand after upload.
+    """
+    mode = body.get("mode", "both")
+    stmt = select(Meeting).where(Meeting.id == meeting_id).options(selectinload(Meeting.jobs))
+    res = await db.execute(stmt)
+    meeting = res.scalar_one_or_none()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+
+    job = Job(
+        meeting_id=meeting.id,
+        status="queued",
+        progress_percent=0,
+        stage_message=f"Generating {mode}..."
+    )
+    db.add(job)
+    await db.commit()
+    await db.refresh(job)
+
+    from app.worker.pipeline import trigger_meeting_processing
+    trigger_meeting_processing(job.id, meeting.id, output_mode=mode)
+
+    return {"job_id": job.id, "meeting_id": meeting_id, "mode": mode}
 
 
 @router.get("", response_model=List[MeetingResponse])
