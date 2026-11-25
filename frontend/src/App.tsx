@@ -29,7 +29,8 @@ import {
   Music,
   ArrowRight,
   Sun,
-  Moon
+  Moon,
+  Columns2
 } from 'lucide-react';
 
 export default function App() {
@@ -37,7 +38,7 @@ export default function App() {
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | undefined>();
   const [currentMeeting, setCurrentMeeting] = useState<MeetingDetail | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
-  const [activeTab, setActiveTab] = useState<'graph' | 'summary'>('graph');
+  const [studioLayout, setStudioLayout] = useState<'notes' | 'flowchart' | 'split'>('notes');
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -154,9 +155,9 @@ export default function App() {
             setIsGeneratingArtifact(false);
             await loadMeetingDetail(currentMeeting.id);
             if (mode === 'flowchart') {
-              setActiveTab('graph');
+              setStudioLayout((prev) => (prev === 'split' ? 'split' : 'flowchart'));
             } else {
-              setActiveTab('summary');
+              setStudioLayout((prev) => (prev === 'split' ? 'split' : 'notes'));
             }
           } else if (progress.status === 'failed') {
             setIsGeneratingArtifact(false);
@@ -363,13 +364,52 @@ export default function App() {
               </div>
 
               {currentMeeting && (
-                <button
-                  onClick={() => setIsExportOpen(true)}
-                  className="flex items-center space-x-1.5 rounded-md border border-[var(--border)] bg-[var(--subtle-fill)] px-2.5 py-1 text-xs font-mono text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-primary)] transition"
-                >
-                  <Share2 className="h-3 w-3" />
-                  <span>Export</span>
-                </button>
+                <div className="flex items-center space-x-2.5">
+                  {/* Studio Layout Mode Switcher */}
+                  <div className="flex items-center rounded-lg border border-[var(--border)] bg-[var(--subtle-fill)] p-0.5 text-[11px] font-mono">
+                    <button
+                      onClick={() => setStudioLayout('notes')}
+                      className={`flex items-center space-x-1.5 rounded-md px-2.5 py-1 transition whitespace-nowrap ${
+                        studioLayout === 'notes'
+                          ? 'bg-[var(--card-hover-bg)] text-[var(--text-primary)] font-medium shadow-sm border border-[var(--accent-cyan)]/40'
+                          : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-transparent'
+                      }`}
+                    >
+                      <FileText className="h-3 w-3 text-[var(--accent-cyan)]" />
+                      <span>Notes & Media</span>
+                    </button>
+                    <button
+                      onClick={() => setStudioLayout('flowchart')}
+                      className={`flex items-center space-x-1.5 rounded-md px-2.5 py-1 transition whitespace-nowrap ${
+                        studioLayout === 'flowchart'
+                          ? 'bg-[var(--card-hover-bg)] text-[var(--text-primary)] font-medium shadow-sm border border-[var(--accent-violet)]/40'
+                          : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-transparent'
+                      }`}
+                    >
+                      <GitBranch className="h-3 w-3 text-[var(--accent-violet)]" />
+                      <span>Flowchart</span>
+                    </button>
+                    <button
+                      onClick={() => setStudioLayout('split')}
+                      className={`flex items-center space-x-1.5 rounded-md px-2.5 py-1 transition whitespace-nowrap ${
+                        studioLayout === 'split'
+                          ? 'bg-[var(--card-hover-bg)] text-[var(--text-primary)] font-medium shadow-sm border border-[var(--accent-violet)]/40'
+                          : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-transparent'
+                      }`}
+                    >
+                      <Columns2 className="h-3 w-3 text-[var(--accent-violet)]" />
+                      <span>Split View</span>
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => setIsExportOpen(true)}
+                    className="flex items-center space-x-1.5 rounded-md border border-[var(--border)] bg-[var(--subtle-fill)] px-2.5 py-1 text-xs font-mono text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-primary)] transition"
+                  >
+                    <Share2 className="h-3 w-3" />
+                    <span>Export</span>
+                  </button>
+                </div>
               )}
             </div>
 
@@ -380,137 +420,187 @@ export default function App() {
                 <span className="text-xs font-mono">Loading session intelligence...</span>
               </div>
             ) : currentMeeting ? (
-              <div className="flex flex-1 overflow-hidden p-3 gap-3">
-                {/* Left Pane: Media Player (Video or Waveform) & Speaker Transcript */}
-                <div className="flex w-5/12 flex-col space-y-3 overflow-hidden">
-                  {isVideo ? (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between px-1">
-                        <span className="text-[10px] font-mono text-[var(--text-secondary)] uppercase tracking-wider">
-                          Media Stream
-                        </span>
-                        <div className="flex items-center rounded-md border border-[var(--border)] bg-[var(--input-bg)] p-0.5 text-[10px] font-mono">
-                          <button
-                            onClick={() => setMediaViewMode('video')}
-                            className={`rounded px-2 py-0.5 transition ${
-                              mediaViewMode === 'video'
-                                ? 'bg-white/[0.1] text-[var(--text-primary)]'
-                                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                            }`}
-                          >
-                            Video Player
-                          </button>
-                          <button
-                            onClick={() => setMediaViewMode('waveform')}
-                            className={`rounded px-2 py-0.5 transition ${
-                              mediaViewMode === 'waveform'
-                                ? 'bg-white/[0.1] text-[var(--text-primary)]'
-                                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                            }`}
-                          >
-                            Audio Waveform
-                          </button>
-                        </div>
-                      </div>
-
-                      {mediaViewMode === 'video' ? (
-                        <VideoPlayer
-                          ref={videoPlayerRef}
-                          videoUrl={getAudioUrl(currentMeeting.id)}
-                          duration={currentMeeting.duration_seconds}
-                          onTimeUpdate={(time) => setCurrentTime(time)}
-                        />
-                      ) : (
-                        <AudioPlayer
-                          ref={audioPlayerRef}
-                          audioUrl={getAudioUrl(currentMeeting.id)}
-                          duration={currentMeeting.duration_seconds}
-                          onTimeUpdate={(time) => setCurrentTime(time)}
-                        />
-                      )}
-                    </div>
-                  ) : (
-                    <AudioPlayer
-                      ref={audioPlayerRef}
-                      audioUrl={getAudioUrl(currentMeeting.id)}
-                      duration={currentMeeting.duration_seconds}
-                      onTimeUpdate={(time) => setCurrentTime(time)}
-                    />
-                  )}
-
-                  <div className="flex-1 overflow-hidden">
-                    <TranscriptViewer
-                      segments={currentMeeting.transcript_segments || []}
-                      currentTime={currentTime}
-                      onSeek={handleSeek}
+              studioLayout === 'flowchart' ? (
+                /* FULL-SCREEN FLOWCHART ONLY */
+                <div key="studio-flowchart-full" className="flex flex-1 overflow-hidden p-3 animate-fade">
+                  <div className="h-full w-full">
+                    <GraphCanvas
+                      graph={currentMeeting.analysis?.graph_json || { nodes: [], edges: [] }}
+                      graphType={currentMeeting.analysis?.graph_type}
+                      hasContent={(currentMeeting.transcript_segments?.length || 0) > 0}
+                      onSeek={(time) => {
+                        setCurrentTime(time);
+                        setStudioLayout('notes');
+                        setTimeout(() => handleSeek(time), 120);
+                      }}
+                      onGenerateFlowchart={() => handleGenerateArtifact('flowchart')}
+                      isGenerating={isGeneratingArtifact}
                     />
                   </div>
                 </div>
+              ) : studioLayout === 'split' ? (
+                /* SPLIT SCREEN: FLOWCHART + NOTES SIMULTANEOUSLY */
+                <div key="studio-split" className="grid grid-cols-1 lg:grid-cols-2 flex-1 overflow-hidden p-3 gap-3 animate-fade">
+                  {/* Left Half: Flowchart */}
+                  <div className="h-full w-full overflow-hidden">
+                    <GraphCanvas
+                      graph={currentMeeting.analysis?.graph_json || { nodes: [], edges: [] }}
+                      graphType={currentMeeting.analysis?.graph_type}
+                      hasContent={(currentMeeting.transcript_segments?.length || 0) > 0}
+                      onSeek={(time) => {
+                        setCurrentTime(time);
+                        setStudioLayout('notes');
+                        setTimeout(() => handleSeek(time), 120);
+                      }}
+                      onGenerateFlowchart={() => handleGenerateArtifact('flowchart')}
+                      isGenerating={isGeneratingArtifact}
+                    />
+                  </div>
 
-                {/* Right Pane: Tabbed Structured Intelligence & Interactive Flowchart */}
-                <div className="flex w-7/12 flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg)] p-3.5">
-                  <div className="flex items-center justify-between border-b border-[var(--border)] pb-2.5 mb-3">
-                    <div className="relative flex items-center bg-[var(--subtle-fill)] p-1 rounded-lg border border-[var(--border)]">
-                      <div
-                        className={`absolute top-1 bottom-1 w-[130px] rounded-md bg-[var(--card-hover-bg)] transition-all duration-200 ease-out ${
-                          activeTab === 'graph' ? 'left-1' : 'left-[135px]'
-                        }`}
-                      />
-                      <button
-                        onClick={() => setActiveTab('graph')}
-                        className={`relative z-10 flex w-[130px] items-center justify-center space-x-1.5 py-1 text-xs font-medium transition-colors ${
-                          activeTab === 'graph' ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                        }`}
-                      >
-                        <GitBranch className="h-3 w-3 text-[var(--accent-violet)]" />
-                        <span>Visual Graph</span>
-                      </button>
-                      <button
-                        onClick={() => setActiveTab('summary')}
-                        className={`relative z-10 flex w-[130px] items-center justify-center space-x-1.5 py-1 text-xs font-medium transition-colors ${
-                          activeTab === 'summary' ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                        }`}
-                      >
-                        <FileText className="h-3 w-3 text-[var(--accent-cyan)]" />
-                        <span>Summary & Actions</span>
-                      </button>
+                  {/* Right Half: Structured Notes */}
+                  <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg)] p-3.5">
+                    <div className="flex items-center justify-between border-b border-[var(--border)] pb-2.5 mb-3">
+                      <div className="flex items-center space-x-2">
+                        <FileText className="h-3.5 w-3.5 text-[var(--accent-cyan)]" />
+                        <span className="text-xs font-semibold text-[var(--text-primary)]">
+                          Summary & Actions
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-[var(--text-secondary)] font-mono">
+                        Click timestamps to verify in media
+                      </span>
                     </div>
 
-                    <div className="text-[10px] text-[var(--text-secondary)] font-mono">
-                      Click timestamps to verify audio/video
+                    <div className="flex-1 overflow-y-auto flex flex-col">
+                      {currentMeeting.analysis ? (
+                        <StructuredSummary
+                          analysis={currentMeeting.analysis}
+                          onSeek={(time) => {
+                            setCurrentTime(time);
+                            setStudioLayout('notes');
+                            setTimeout(() => handleSeek(time), 120);
+                          }}
+                          onGenerateNotes={() => handleGenerateArtifact('notes')}
+                          isGenerating={isGeneratingArtifact}
+                        />
+                      ) : (
+                        <div className="flex h-full flex-col items-center justify-center p-8 text-center text-xs text-[var(--text-secondary)]/50">
+                          No analysis available
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* STANDARD VIEW: MEDIA + TRANSCRIPT (LEFT) & NOTES (RIGHT) */
+                <div key="studio-notes" className="flex flex-1 overflow-hidden p-3 gap-3 animate-fade">
+                  {/* Left Pane: Media Player (Video or Waveform) & Speaker Transcript */}
+                  <div className="flex w-5/12 flex-col space-y-3 overflow-hidden">
+                    {isVideo ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between px-1">
+                          <span className="text-[10px] font-mono text-[var(--text-secondary)] uppercase tracking-wider">
+                            Media Stream
+                          </span>
+                          <div className="flex items-center rounded-md border border-[var(--border)] bg-[var(--input-bg)] p-0.5 text-[10px] font-mono">
+                            <button
+                              onClick={() => setMediaViewMode('video')}
+                              className={`rounded px-2 py-0.5 transition ${
+                                mediaViewMode === 'video'
+                                  ? 'bg-[var(--card-hover-bg)] text-[var(--text-primary)]'
+                                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                              }`}
+                            >
+                              Video Player
+                            </button>
+                            <button
+                              onClick={() => setMediaViewMode('waveform')}
+                              className={`rounded px-2 py-0.5 transition ${
+                                mediaViewMode === 'waveform'
+                                  ? 'bg-[var(--card-hover-bg)] text-[var(--text-primary)]'
+                                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                              }`}
+                            >
+                              Audio Waveform
+                            </button>
+                          </div>
+                        </div>
+
+                        {mediaViewMode === 'video' ? (
+                          <VideoPlayer
+                            ref={videoPlayerRef}
+                            videoUrl={getAudioUrl(currentMeeting.id)}
+                            duration={currentMeeting.duration_seconds}
+                            onTimeUpdate={(time) => setCurrentTime(time)}
+                          />
+                        ) : (
+                          <AudioPlayer
+                            ref={audioPlayerRef}
+                            audioUrl={getAudioUrl(currentMeeting.id)}
+                            duration={currentMeeting.duration_seconds}
+                            onTimeUpdate={(time) => setCurrentTime(time)}
+                          />
+                        )}
+                      </div>
+                    ) : (
+                      <AudioPlayer
+                        ref={audioPlayerRef}
+                        audioUrl={getAudioUrl(currentMeeting.id)}
+                        duration={currentMeeting.duration_seconds}
+                        onTimeUpdate={(time) => setCurrentTime(time)}
+                      />
+                    )}
+
+                    <div className="flex-1 overflow-hidden">
+                      <TranscriptViewer
+                        segments={currentMeeting.transcript_segments || []}
+                        currentTime={currentTime}
+                        onSeek={handleSeek}
+                      />
                     </div>
                   </div>
 
-                  {/* Tab Content */}
-                  <div className="flex-1 overflow-hidden">
-                    {activeTab === 'graph' ? (
-                      <div key="graph" className="h-full w-full animate-slide-right">
-                        <GraphCanvas
-                          graph={currentMeeting.analysis?.graph_json || { nodes: [], edges: [] }}
-                          graphType={currentMeeting.analysis?.graph_type}
-                          hasContent={(currentMeeting.transcript_segments?.length || 0) > 0}
-                          onSeek={handleSeek}
-                          onGenerateFlowchart={() => handleGenerateArtifact('flowchart')}
-                          isGenerating={isGeneratingArtifact}
-                        />
+                  {/* Right Pane: Structured Notes (Summary & Actions) */}
+                  <div className="flex w-7/12 flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg)] p-3.5">
+                    <div className="flex items-center justify-between border-b border-[var(--border)] pb-2.5 mb-3">
+                      <div className="flex items-center space-x-2">
+                        <FileText className="h-3.5 w-3.5 text-[var(--accent-cyan)]" />
+                        <span className="text-xs font-semibold text-[var(--text-primary)]">
+                          Summary & Actions
+                        </span>
                       </div>
-                    ) : currentMeeting.analysis ? (
-                      <div key="summary" className="h-full w-full animate-slide-left">
+
+                      <div className="flex items-center space-x-2">
+                        <span className="hidden xl:inline text-[10px] text-[var(--text-secondary)] font-mono">
+                          Click timestamps to verify audio/video
+                        </span>
+                        <button
+                          onClick={() => setStudioLayout('flowchart')}
+                          className="flex items-center space-x-1 rounded-md border border-[var(--border)] bg-[var(--subtle-fill)] px-2.5 py-1 text-[11px] font-mono text-[var(--accent-violet)] hover:border-[var(--accent-violet)] hover:bg-[var(--card-hover-bg)] transition"
+                        >
+                          <GitBranch className="h-3 w-3" />
+                          <span>Open Flowchart</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto flex flex-col">
+                      {currentMeeting.analysis ? (
                         <StructuredSummary
                           analysis={currentMeeting.analysis}
                           onSeek={handleSeek}
                           onGenerateNotes={() => handleGenerateArtifact('notes')}
                           isGenerating={isGeneratingArtifact}
                         />
-                      </div>
-                    ) : (
-                      <div className="flex h-full flex-col items-center justify-center p-8 text-center text-xs text-[var(--text-secondary)]/50">
-                        No analysis available
-                      </div>
-                    )}
+                      ) : (
+                        <div className="flex h-full flex-col items-center justify-center p-8 text-center text-xs text-[var(--text-secondary)]/50">
+                          No analysis available
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )
             ) : (
               <div className="flex flex-1 flex-col items-center justify-center p-8 text-center animate-fade">
                 <h3 className="text-sm font-medium text-[var(--text-primary)] mb-1">No Recording Selected</h3>
