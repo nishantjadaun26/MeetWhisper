@@ -13,11 +13,12 @@ from fastapi import (
 )
 from fastapi.responses import StreamingResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, or_
 from sqlalchemy.orm import selectinload
 
+from app.api.deps import get_current_user_optional
 from app.db.session import get_db
-from app.db.models import Meeting, Job, TranscriptSegment, MeetingAnalysis, TopicSegment
+from app.db.models import Meeting, Job, TranscriptSegment, MeetingAnalysis, TopicSegment, User
 from app.schemas.meeting import MeetingResponse, MeetingDetailResponse
 from app.services.storage import storage_service
 from app.services.audio import (
@@ -36,7 +37,8 @@ async def upload_meeting(
     file: UploadFile = File(...),
     title: Optional[str] = Form(None),
     output_mode: Optional[str] = Form("both"),  # 'flowchart' | 'notes' | 'both'
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ):
     if not file.filename:
         raise HTTPException(status_code=400, detail="Uploaded file has no filename")
@@ -51,6 +53,7 @@ async def upload_meeting(
     meeting_title = title.strip() if title and title.strip() else os.path.splitext(file.filename)[0].replace("_", " ").title()
     mime = file.content_type or mimetypes.guess_type(file.filename)[0] or "audio/mpeg"
     meeting = Meeting(
+        user_id=current_user.id if current_user else None,
         title=meeting_title,
         filename=file.filename,
         file_path="",
@@ -147,12 +150,16 @@ async def generate_artifact_on_demand(
 
 
 @router.get("", response_model=List[MeetingResponse])
-async def list_meetings(db: AsyncSession = Depends(get_db)):
-    stmt = (
-        select(Meeting)
-        .options(selectinload(Meeting.jobs))
-        .order_by(desc(Meeting.created_at))
-    )
+async def list_meetings(
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+):
+    stmt = select(Meeting).options(selectinload(Meeting.jobs))
+    if current_user:
+        stmt = stmt.where(or_(Meeting.user_id == current_user.id, Meeting.user_id.is_(None)))
+    else:
+        stmt = stmt.where(Meeting.user_id.is_(None))
+    stmt = stmt.order_by(desc(Meeting.created_at))
     result = await db.execute(stmt)
     meetings = result.scalars().all()
 
