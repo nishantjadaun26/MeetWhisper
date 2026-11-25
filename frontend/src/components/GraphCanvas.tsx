@@ -1,7 +1,6 @@
 import React, { useMemo, useCallback } from 'react';
 import {
   ReactFlow,
-  MiniMap,
   Controls,
   Background,
   useNodesState,
@@ -216,8 +215,8 @@ function getBalancedLayoutedElements(nodes: Node[], edges: any[]) {
   // If sequential / linear (or small), wrap into a compact 3-column serpentine flow
   if (maxOut <= 1) {
     const cols = nodes.length <= 2 ? nodes.length : 3;
-    const xGap = 410;
-    const yGap = 230;
+    const xGap = 470;
+    const yGap = 270;
 
     const layoutedNodes = nodes.map((node, index) => {
       const row = Math.floor(index / cols);
@@ -255,8 +254,8 @@ function getBalancedLayoutedElements(nodes: Node[], edges: any[]) {
   dagreGraph.setDefaultEdgeLabel(() => ({}));
   dagreGraph.setGraph({
     rankdir: 'TB',
-    nodesep: 50,
-    ranksep: 75,
+    nodesep: 90,
+    ranksep: 115,
   });
 
   nodes.forEach((node) => {
@@ -434,11 +433,6 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       >
         <Background color="var(--border)" gap={24} size={1.2} variant={BackgroundVariant.Dots} />
         <Controls className="!bg-[var(--panel-bg)] !border-[var(--border)] !text-[var(--text-secondary)] fill-[var(--text-secondary)] rounded-lg overflow-hidden shadow-md" />
-        <MiniMap
-          nodeColor="var(--accent-violet)"
-          className="!bg-[var(--panel-bg)]/90 !border-[var(--border)] !rounded-lg shadow-md"
-          maskColor="rgba(0, 0, 0, 0.35)"
-        />
       </ReactFlow>
     </div>
   );
