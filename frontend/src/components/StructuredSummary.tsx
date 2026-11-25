@@ -1,26 +1,27 @@
 import React, { useState } from 'react';
-import { MeetingAnalysis, ActionItem } from '../types/meeting';
+import { MeetingAnalysis } from '../types/meeting';
 import { formatTime } from '../utils/format';
 import {
-  Sparkles,
-  CheckCircle2,
-  HelpCircle,
   Clock,
-  Layers,
-  Calendar,
   User,
-  CheckSquare,
-  Square
+  Calendar,
+  Check,
+  FileText,
+  Loader2
 } from 'lucide-react';
 
 interface StructuredSummaryProps {
   analysis: MeetingAnalysis;
   onSeek: (time: number) => void;
+  onGenerateNotes?: () => void;
+  isGenerating?: boolean;
 }
 
 export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
   analysis,
   onSeek,
+  onGenerateNotes,
+  isGenerating,
 }) => {
   const [completedTasks, setCompletedTasks] = useState<Record<number, boolean>>({});
 
@@ -31,39 +32,76 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
     }));
   };
 
-  return (
-    <div className="flex-1 overflow-y-auto space-y-6 pr-2">
-      {/* Executive Summary */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg backdrop-blur">
-        <div className="flex items-center space-x-2 mb-2 text-cyan-400">
-          <Sparkles className="h-4 w-4" />
-          <h3 className="font-semibold text-xs tracking-wider uppercase text-cyan-400">
-            Executive Summary
-          </h3>
+  const hasNotes = Boolean(
+    (analysis.executive_summary && analysis.executive_summary.trim().length > 0) ||
+    (analysis.decisions_json && analysis.decisions_json.length > 0)
+  );
+
+  if (!hasNotes) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-8 text-center animate-fade">
+        <div className="h-10 w-10 rounded-full bg-[var(--subtle-fill)] border border-[var(--border)] flex items-center justify-center text-[var(--text-secondary)] mb-3">
+          <FileText className="h-5 w-5 text-[var(--accent-cyan)]" />
         </div>
-        <p className="text-xs leading-relaxed text-slate-300 font-normal">
-          {analysis.executive_summary}
+        <h3 className="text-xs font-semibold text-[var(--text-primary)] mb-1">Notes & Summary Not Generated</h3>
+        <p className="text-[11px] text-[var(--text-secondary)] max-w-xs mb-4">
+          You chose Flowchart Only during upload. You can generate executive summary, decisions, and action items on demand.
         </p>
+        {onGenerateNotes && (
+          <button
+            onClick={onGenerateNotes}
+            disabled={isGenerating}
+            className="flex items-center space-x-1.5 rounded-lg border border-[var(--accent-cyan)]/40 bg-[var(--accent-cyan)]/10 px-3.5 py-1.5 text-xs font-medium text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/20 transition active:scale-95 disabled:opacity-50"
+          >
+            {isGenerating ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <FileText className="h-3.5 w-3.5" />
+            )}
+            <span>{isGenerating ? 'Generating Notes...' : 'Generate Notes & Summary'}</span>
+          </button>
+        )}
       </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 overflow-y-auto space-y-5 pr-2 animate-slide-up">
+      {/* Executive Summary */}
+      {analysis.executive_summary && (
+        <section className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[var(--accent-violet)]">
+              Overview
+            </h3>
+            <span className="font-mono text-[10px] text-[var(--accent-cyan)] border border-[var(--accent-cyan)]/30 px-1.5 py-0.5 rounded">
+              VERIFIED
+            </span>
+          </div>
+          <p className="text-xs leading-relaxed text-[var(--text-secondary)]">
+            {analysis.executive_summary}
+          </p>
+        </section>
+      )}
 
       {/* Decisions */}
       {analysis.decisions_json && analysis.decisions_json.length > 0 && (
-        <div className="rounded-xl border border-emerald-900/40 bg-emerald-950/10 p-4 shadow-lg">
-          <div className="flex items-center space-x-2 mb-3 text-emerald-400">
-            <CheckCircle2 className="h-4 w-4" />
-            <h3 className="font-semibold text-xs tracking-wider uppercase text-emerald-400">
-              Key Decisions ({analysis.decisions_json.length})
+        <section className="space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[var(--accent-violet)]">
+              Decisions ({analysis.decisions_json.length})
             </h3>
           </div>
-          <div className="space-y-2.5">
+
+          <div className="space-y-1.5">
             {analysis.decisions_json.map((d, idx) => (
               <div
                 key={idx}
                 onClick={() => onSeek(d.timestamp_start)}
-                className="group flex flex-col justify-between rounded-lg border border-emerald-900/30 bg-slate-900/70 p-3 transition hover:border-emerald-500/50 hover:bg-slate-900 cursor-pointer"
+                className="group cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--card-bg)] p-3 transition-all duration-150 hover:border-[var(--accent-violet)] hover:bg-[var(--card-hover-bg)] shadow-sm"
               >
                 <div className="flex items-start justify-between">
-                  <span className="font-medium text-xs text-slate-100 group-hover:text-emerald-300 transition">
+                  <span className="text-xs font-medium text-[var(--text-primary)] group-hover:text-[var(--accent-violet)] transition">
                     {d.statement}
                   </span>
                   <button
@@ -71,94 +109,89 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
                       e.stopPropagation();
                       onSeek(d.timestamp_start);
                     }}
-                    className="flex shrink-0 ml-2 items-center space-x-1 rounded bg-emerald-950/60 px-1.5 py-0.5 font-mono text-[11px] text-emerald-400 border border-emerald-800/40 hover:bg-emerald-500/20"
-                    title="Click to seek audio"
+                    className="flex shrink-0 ml-3 items-center space-x-1 font-mono text-[10px] text-[var(--accent-cyan)] hover:underline"
+                    title="Seek audio/video"
                   >
                     <Clock className="h-2.5 w-2.5" />
                     <span>{formatTime(d.timestamp_start)}</span>
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1 italic">{d.context}</p>
+
+                <p className="mt-1 text-[11px] text-[var(--text-secondary)]">
+                  {d.context}
+                </p>
+
                 {d.speaker && (
-                  <div className="mt-2 flex items-center text-[10px] text-slate-500">
-                    <User className="mr-1 h-3 w-3" />
-                    <span>Decided by {d.speaker}</span>
+                  <div className="mt-2 flex items-center text-[10px] text-[var(--accent-violet)] font-mono">
+                    <User className="mr-1 h-2.5 w-2.5" />
+                    <span>{d.speaker}</span>
                   </div>
                 )}
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Action Items */}
       {analysis.action_items_json && analysis.action_items_json.length > 0 && (
-        <div className="rounded-xl border border-blue-900/40 bg-blue-950/10 p-4 shadow-lg">
-          <div className="flex items-center space-x-2 mb-3 text-blue-400">
-            <CheckSquare className="h-4 w-4" />
-            <h3 className="font-semibold text-xs tracking-wider uppercase text-blue-400">
+        <section className="space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[var(--accent-violet)]">
               Action Items ({analysis.action_items_json.length})
             </h3>
           </div>
-          <div className="space-y-2">
-            {analysis.action_items_json.map((a: ActionItem, idx: number) => {
-              const isChecked = !!completedTasks[idx];
+
+          <div className="space-y-1.5">
+            {analysis.action_items_json.map((a, idx) => {
+              const isChecked = completedTasks[idx] || false;
               return (
                 <div
                   key={idx}
-                  onClick={() => onSeek(a.timestamp_start)}
-                  className={`group flex items-center justify-between rounded-lg border p-3 transition cursor-pointer ${
-                    isChecked
-                      ? 'border-slate-800 bg-slate-900/30 opacity-60'
-                      : 'border-blue-900/30 bg-slate-900/70 hover:border-blue-500/50 hover:bg-slate-900'
+                  className={`group flex items-start space-x-3 rounded-lg border border-[var(--border)] bg-[var(--card-bg)] p-3 transition-all duration-150 hover:border-[var(--accent-violet)] shadow-sm ${
+                    isChecked ? 'opacity-40' : ''
                   }`}
                 >
-                  <div className="flex items-center space-x-3 overflow-hidden">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleTask(idx);
-                      }}
-                      className="text-slate-400 hover:text-cyan-400"
+                  <button
+                    onClick={() => toggleTask(idx)}
+                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition ${
+                      isChecked
+                        ? 'border-[var(--accent-cyan)] bg-[var(--accent-cyan)] text-white'
+                        : 'border-[var(--border)] bg-[var(--subtle-fill)] hover:border-[var(--accent-violet)]'
+                    }`}
+                  >
+                    {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
+                  </button>
+
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className={`text-xs font-medium transition ${
+                        isChecked ? 'line-through text-[var(--text-secondary)]' : 'text-[var(--text-primary)]'
+                      }`}
                     >
-                      {isChecked ? (
-                        <CheckSquare className="h-4 w-4 text-emerald-400" />
-                      ) : (
-                        <Square className="h-4 w-4" />
+                      {a.task}
+                    </p>
+
+                    <div className="mt-1 flex flex-wrap items-center gap-3 font-mono text-[10px] text-[var(--text-secondary)]">
+                      {a.owner && (
+                        <div className="flex items-center text-[var(--accent-violet)]">
+                          <User className="mr-1 h-2.5 w-2.5" />
+                          <span>{a.owner}</span>
+                        </div>
                       )}
-                    </button>
-                    <div className="flex flex-col">
-                      <span
-                        className={`text-xs ${
-                          isChecked ? 'line-through text-slate-500' : 'text-slate-200 group-hover:text-blue-300'
-                        }`}
-                      >
-                        {a.task}
-                      </span>
-                      <div className="flex items-center space-x-2 mt-1">
-                        {a.owner && (
-                          <span className="flex items-center text-[10px] text-blue-400">
-                            <User className="mr-0.5 h-2.5 w-2.5" />
-                            {a.owner}
-                          </span>
-                        )}
-                        {a.deadline && (
-                          <span className="flex items-center text-[10px] text-slate-400">
-                            <Calendar className="mr-0.5 h-2.5 w-2.5" />
-                            {a.deadline}
-                          </span>
-                        )}
-                      </div>
+                      {a.deadline && (
+                        <div className="flex items-center text-[var(--accent-cyan)]">
+                          <Calendar className="mr-1 h-2.5 w-2.5" />
+                          <span>{a.deadline}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSeek(a.timestamp_start);
-                    }}
-                    className="flex shrink-0 ml-2 items-center space-x-1 rounded bg-blue-950/60 px-1.5 py-0.5 font-mono text-[11px] text-blue-400 border border-blue-800/40 hover:bg-blue-500/20"
-                    title="Click to seek audio"
+                    onClick={() => onSeek(a.timestamp_start)}
+                    className="flex shrink-0 items-center space-x-1 font-mono text-[10px] text-[var(--accent-cyan)] hover:underline"
+                    title="Seek audio/video"
                   >
                     <Clock className="h-2.5 w-2.5" />
                     <span>{formatTime(a.timestamp_start)}</span>
@@ -167,33 +200,33 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
               );
             })}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Open Questions */}
       {analysis.open_questions_json && analysis.open_questions_json.length > 0 && (
-        <div className="rounded-xl border border-amber-900/40 bg-amber-950/10 p-4 shadow-lg">
-          <div className="flex items-center space-x-2 mb-3 text-amber-400">
-            <HelpCircle className="h-4 w-4" />
-            <h3 className="font-semibold text-xs tracking-wider uppercase text-amber-400">
+        <section className="space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[var(--accent-violet)]">
               Open Questions ({analysis.open_questions_json.length})
             </h3>
           </div>
-          <div className="space-y-2">
+
+          <div className="space-y-1.5">
             {analysis.open_questions_json.map((q, idx) => (
               <div
                 key={idx}
                 onClick={() => onSeek(q.timestamp_start)}
-                className="group flex items-start justify-between rounded-lg border border-amber-900/30 bg-slate-900/70 p-3 transition hover:border-amber-500/50 hover:bg-slate-900 cursor-pointer"
+                className="group flex items-start justify-between rounded-lg border border-[var(--border)] bg-[var(--card-bg)] p-3 transition-all duration-150 hover:border-[var(--accent-violet)] cursor-pointer shadow-sm"
               >
                 <div>
-                  <span className="text-xs font-medium text-slate-200 group-hover:text-amber-300">
+                  <span className="text-xs font-medium text-[var(--text-primary)] group-hover:text-[var(--accent-violet)]">
                     {q.question}
                   </span>
                   {q.raised_by && (
-                    <div className="mt-1 flex items-center text-[10px] text-slate-400">
-                      <User className="mr-1 h-2.5 w-2.5" />
-                      <span>Raised by {q.raised_by}</span>
+                    <div className="mt-1 flex items-center text-[10px] text-[var(--text-secondary)] font-mono">
+                      <User className="mr-1 h-2.5 w-2.5 text-[var(--accent-violet)]" />
+                      <span>{q.raised_by}</span>
                     </div>
                   )}
                 </div>
@@ -202,8 +235,8 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
                     e.stopPropagation();
                     onSeek(q.timestamp_start);
                   }}
-                  className="flex shrink-0 ml-2 items-center space-x-1 rounded bg-amber-950/60 px-1.5 py-0.5 font-mono text-[11px] text-amber-400 border border-amber-800/40 hover:bg-amber-500/20"
-                  title="Click to seek audio"
+                  className="flex shrink-0 ml-3 items-center space-x-1 font-mono text-[10px] text-[var(--accent-cyan)] hover:underline"
+                  title="Seek audio/video"
                 >
                   <Clock className="h-2.5 w-2.5" />
                   <span>{formatTime(q.timestamp_start)}</span>
@@ -211,46 +244,7 @@ export const StructuredSummary: React.FC<StructuredSummaryProps> = ({
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* Topic Segments */}
-      {analysis.topics_json && analysis.topics_json.length > 0 && (
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg">
-          <div className="flex items-center space-x-2 mb-3 text-slate-300">
-            <Layers className="h-4 w-4 text-cyan-400" />
-            <h3 className="font-semibold text-xs tracking-wider uppercase text-slate-300">
-              Discussion Topics
-            </h3>
-          </div>
-          <div className="space-y-2">
-            {analysis.topics_json.map((t, idx) => (
-              <div
-                key={idx}
-                onClick={() => onSeek(t.timestamp_start)}
-                className="group flex items-start justify-between rounded-lg border border-slate-800/80 bg-slate-900/40 p-2.5 transition hover:border-slate-700 hover:bg-slate-850 cursor-pointer"
-              >
-                <div>
-                  <h4 className="text-xs font-semibold text-slate-200 group-hover:text-cyan-400">
-                    {t.title}
-                  </h4>
-                  <p className="text-[11px] text-slate-400 mt-0.5">{t.summary}</p>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSeek(t.timestamp_start);
-                  }}
-                  className="flex shrink-0 ml-2 items-center space-x-1 rounded bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] text-slate-400 hover:text-cyan-300"
-                  title="Click to seek audio"
-                >
-                  <Clock className="h-2.5 w-2.5" />
-                  <span>{formatTime(t.timestamp_start)}</span>
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+        </section>
       )}
     </div>
   );

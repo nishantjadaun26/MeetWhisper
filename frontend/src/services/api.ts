@@ -16,13 +16,15 @@ export async function fetchMeetingDetail(id: string): Promise<MeetingDetail> {
 
 export async function uploadMeetingAudio(
   file: File,
-  title?: string
-): Promise<{ meeting_id: string; job_id: string }> {
+  title?: string,
+  outputMode: 'flowchart' | 'notes' | 'both' = 'both'
+): Promise<{ meeting_id: string; job_id: string; output_mode: string }> {
   const formData = new FormData();
   formData.append('file', file);
   if (title) {
     formData.append('title', title);
   }
+  formData.append('output_mode', outputMode);
 
   const res = await fetch(`${API_BASE}/api/meetings/upload`, {
     method: 'POST',
@@ -32,6 +34,24 @@ export async function uploadMeetingAudio(
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.detail || 'Upload failed');
+  }
+
+  return res.json();
+}
+
+export async function generateArtifact(
+  meetingId: string,
+  mode: 'flowchart' | 'notes' | 'both'
+): Promise<{ job_id: string; meeting_id: string; mode: string }> {
+  const res = await fetch(`${API_BASE}/api/meetings/${meetingId}/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Failed to trigger artifact generation');
   }
 
   return res.json();

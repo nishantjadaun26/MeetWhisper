@@ -7,7 +7,11 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  Sparkles
+  GitBranch,
+  FileText,
+  Layers,
+  Video,
+  Music
 } from 'lucide-react';
 
 interface UploadModalProps {
@@ -19,13 +23,13 @@ interface UploadModalProps {
 const STAGE_ORDER = ['queued', 'normalizing', 'transcribing', 'chunking', 'extracting_graph', 'completed'];
 
 const STAGE_LABELS: Record<string, string> = {
-  queued: 'Queued in background queue',
-  normalizing: '16kHz Audio Normalization via ffmpeg',
-  transcribing: 'Speech Recognition & Speaker Diarization',
-  chunking: 'Semantic Topic Segmentation',
-  extracting_graph: 'Schema Extraction & Graph Validation',
-  completed: 'Processing Complete',
-  failed: 'Processing Failed',
+  queued: 'Queued',
+  normalizing: 'Normalizing media & extracting audio (16kHz PCM WAV)',
+  transcribing: 'Transcribing speech & labeling speakers',
+  chunking: 'Detecting semantic topic boundaries',
+  extracting_graph: 'Synthesizing intelligence & validating graph',
+  completed: 'Processing complete',
+  failed: 'Processing failed',
 };
 
 export const UploadModal: React.FC<UploadModalProps> = ({
@@ -35,12 +39,18 @@ export const UploadModal: React.FC<UploadModalProps> = ({
 }) => {
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');
+  const [outputMode, setOutputMode] = useState<'flowchart' | 'notes' | 'both'>('both');
   const [isUploading, setIsUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [jobProgress, setJobProgress] = useState<JobProgress | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
+
+  const isVideoFile = (f: File | null) => {
+    if (!f) return false;
+    return f.type.startsWith('video/') || /\.(mp4|webm|mov|mkv|avi|m4v)$/i.test(f.name);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -70,10 +80,9 @@ export const UploadModal: React.FC<UploadModalProps> = ({
     setErrorMessage(null);
 
     try {
-      const result = await uploadMeetingAudio(file, title);
+      const result = await uploadMeetingAudio(file, title, outputMode);
       const { meeting_id, job_id } = result;
 
-      // Start SSE listener
       subscribeJobProgress(
         job_id,
         (progress) => {
@@ -82,7 +91,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
             setTimeout(() => {
               onUploadSuccess(meeting_id);
               onClose();
-            }, 1200);
+            }, 1000);
           } else if (progress.status === 'failed') {
             setErrorMessage(progress.error_message || 'Processing failed');
           }
@@ -98,24 +107,21 @@ export const UploadModal: React.FC<UploadModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
-      <div className="relative w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade">
+      <div className="relative w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--panel-bg)] p-6 shadow-2xl animate-slide-up text-[var(--text-primary)]">
         {/* Close Button */}
         {!isUploading && (
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 text-slate-400 hover:text-slate-100"
+            className="absolute right-4 top-4 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         )}
 
-        <div className="flex items-center space-x-2 text-cyan-400 mb-1">
-          <Sparkles className="h-5 w-5" />
-          <h2 className="text-base font-semibold text-slate-100">Upload Recording</h2>
-        </div>
-        <p className="text-xs text-slate-400 mb-5">
-          Process audio or video into diarized transcripts, structured summaries & interactive flowcharts.
+        <h2 className="text-base font-semibold text-[var(--text-primary)] mb-1">Upload Recording or Video</h2>
+        <p className="text-xs text-[var(--text-secondary)] mb-5">
+          Process speech or video into verified summaries, structured notes & validated flowcharts.
         </p>
 
         {!isUploading ? (
@@ -125,51 +131,107 @@ export const UploadModal: React.FC<UploadModalProps> = ({
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-700 bg-slate-950/50 p-8 text-center transition hover:border-cyan-500 hover:bg-slate-900/50 cursor-pointer"
+              className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--border)] bg-[var(--subtle-fill)] p-6 text-center transition hover:border-[var(--accent-violet)] hover:bg-[var(--card-hover-bg)] cursor-pointer"
             >
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".mp3,.wav,.m4a,.mp4,.webm,.ogg,.flac,.aac"
+                accept=".mp3,.wav,.m4a,.mp4,.webm,.mov,.mkv,.avi,.ogg,.flac,.aac"
                 onChange={handleFileChange}
                 className="hidden"
               />
-              <UploadCloud className="h-10 w-10 text-cyan-400 mb-2" />
-              <p className="text-sm font-medium text-slate-200">
-                {file ? file.name : 'Click to select or drag & drop audio/video'}
+              <div className="flex items-center space-x-2 text-[var(--accent-violet)] mb-2">
+                {file ? (
+                  isVideoFile(file) ? <Video className="h-6 w-6 text-[var(--accent-cyan)]" /> : <Music className="h-6 w-6 text-[var(--accent-violet)]" />
+                ) : (
+                  <UploadCloud className="h-6 w-6" />
+                )}
+              </div>
+              <p className="text-xs font-medium text-[var(--text-primary)] truncate max-w-xs">
+                {file ? file.name : 'Choose file or drag & drop'}
               </p>
-              <p className="text-[11px] text-slate-500 mt-1">
-                MP3, WAV, M4A, MP4, WEBM up to 250MB
+              <p className="text-[11px] font-mono text-[var(--text-secondary)] mt-1">
+                .mp3 · .wav · .mp4 · .mov · .webm
               </p>
+            </div>
+
+            {/* Output Choice Selector */}
+            <div>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5 font-mono">
+                Choose Output Mode
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOutputMode('notes')}
+                  className={`flex flex-col items-center justify-center rounded-lg border p-2.5 text-center transition ${
+                    outputMode === 'notes'
+                      ? 'border-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10 text-[var(--text-primary)] shadow-sm'
+                      : 'border-[var(--border)] bg-[var(--subtle-fill)] text-[var(--text-secondary)] hover:border-[var(--accent-violet)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  <FileText className="h-4 w-4 mb-1 text-[var(--accent-cyan)]" />
+                  <span className="text-[11px] font-semibold">Notes Only</span>
+                  <span className="text-[9px] text-[var(--text-secondary)]">Summary & tasks</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setOutputMode('flowchart')}
+                  className={`flex flex-col items-center justify-center rounded-lg border p-2.5 text-center transition ${
+                    outputMode === 'flowchart'
+                      ? 'border-[var(--accent-violet)] bg-[var(--accent-violet)]/10 text-[var(--text-primary)] shadow-sm'
+                      : 'border-[var(--border)] bg-[var(--subtle-fill)] text-[var(--text-secondary)] hover:border-[var(--accent-violet)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  <GitBranch className="h-4 w-4 mb-1 text-[var(--accent-violet)]" />
+                  <span className="text-[11px] font-semibold">Flowchart</span>
+                  <span className="text-[9px] text-[var(--text-secondary)]">Decision graph</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setOutputMode('both')}
+                  className={`flex flex-col items-center justify-center rounded-lg border p-2.5 text-center transition ${
+                    outputMode === 'both'
+                      ? 'border-[var(--accent-violet)] bg-[var(--accent-violet)]/10 text-[var(--text-primary)] shadow-sm'
+                      : 'border-[var(--border)] bg-[var(--subtle-fill)] text-[var(--text-secondary)] hover:border-[var(--accent-violet)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  <Layers className="h-4 w-4 mb-1 text-[var(--accent-violet)]" />
+                  <span className="text-[11px] font-semibold">Both</span>
+                  <span className="text-[9px] text-[var(--text-secondary)]">Complete suite</span>
+                </button>
+              </div>
             </div>
 
             {/* Title Input */}
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                Meeting Title (Optional)
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1 font-mono">
+                Title (Optional)
               </label>
               <input
                 type="text"
-                placeholder="e.g. Q4 Infrastructure Architecture Review"
+                placeholder="e.g. Q4 Architecture Review"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                className="w-full rounded-md border border-[var(--border)] bg-[var(--input-bg)] px-3 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-secondary)]/40 transition focus:border-[var(--accent-violet)] focus:outline-none font-mono"
               />
             </div>
 
             {errorMessage && (
-              <div className="flex items-center space-x-2 rounded-lg border border-red-500/40 bg-red-950/20 p-3 text-xs text-red-400">
+              <div className="flex items-center space-x-2 rounded-md border border-red-500/20 bg-red-950/20 p-2.5 text-xs text-red-400">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{errorMessage}</span>
               </div>
             )}
 
             {/* Actions */}
-            <div className="flex justify-end space-x-3 pt-2">
+            <div className="flex justify-end space-x-2 pt-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-lg px-4 py-2 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                className="rounded-md px-3 py-1.5 text-xs font-medium text-[#B3AFCB] hover:text-[#F1EFFA] transition font-mono"
               >
                 Cancel
               </button>
@@ -177,37 +239,37 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                 type="button"
                 onClick={handleStartUpload}
                 disabled={!file}
-                className="flex items-center space-x-2 rounded-lg bg-cyan-500 px-5 py-2 text-xs font-medium text-slate-950 transition hover:bg-cyan-400 active:scale-95 disabled:opacity-40 disabled:hover:bg-cyan-500"
+                className="btn-gradient !h-9 !px-4 !text-xs disabled:opacity-40"
               >
-                <span>Start Processing</span>
+                Process Recording
               </button>
             </div>
           </div>
         ) : (
           /* Live Progress SSE Tracker */
-          <div className="space-y-5 py-4">
+          <div className="space-y-4 py-3 animate-fade">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
-                <span className="text-xs font-medium text-slate-200">
-                  {jobProgress ? STAGE_LABELS[jobProgress.status] || jobProgress.status : 'Initiating pipeline...'}
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-[#67E8F9]" />
+                <span className="text-xs font-medium text-[#F1EFFA]">
+                  {jobProgress ? STAGE_LABELS[jobProgress.status] || jobProgress.status : 'Initializing...'}
                 </span>
               </div>
-              <span className="font-mono text-xs font-semibold text-cyan-400">
+              <span className="font-mono text-xs text-[#67E8F9]">
                 {jobProgress?.progress_percent || 0}%
               </span>
             </div>
 
             {/* Progress bar */}
-            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#2E2B45]">
               <div
-                className="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 transition-all duration-300"
+                className="h-full bg-[#67E8F9] transition-all duration-300 ease-out"
                 style={{ width: `${jobProgress?.progress_percent || 0}%` }}
               />
             </div>
 
             {/* Stage Stepper */}
-            <div className="space-y-2 pt-2">
+            <div className="space-y-1.5 pt-2">
               {STAGE_ORDER.slice(1, -1).map((stage) => {
                 const isDone =
                   jobProgress &&
@@ -217,21 +279,21 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                 return (
                   <div
                     key={stage}
-                    className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs transition border ${
+                    className={`flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs transition ${
                       isCurrent
-                        ? 'border-cyan-500/40 bg-cyan-950/20 text-cyan-300'
+                        ? 'text-[#F1EFFA] font-medium bg-white/[0.04]'
                         : isDone
-                        ? 'border-emerald-900/30 bg-emerald-950/10 text-emerald-400'
-                        : 'border-transparent text-slate-500'
+                        ? 'text-[#B3AFCB]'
+                        : 'text-[#B3AFCB]/40'
                     }`}
                   >
                     <span>{STAGE_LABELS[stage]}</span>
                     {isDone ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                      <CheckCircle2 className="h-3.5 w-3.5 text-[#67E8F9]" />
                     ) : isCurrent ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400" />
+                      <Loader2 className="h-3 w-3 animate-spin text-[#C4B5FD]" />
                     ) : (
-                      <span className="h-1.5 w-1.5 rounded-full bg-slate-700" />
+                      <span className="h-1 w-1 rounded-full bg-[#2E2B45]" />
                     )}
                   </div>
                 );
@@ -239,7 +301,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
             </div>
 
             {errorMessage && (
-              <div className="flex items-center space-x-2 rounded-lg border border-red-500/40 bg-red-950/20 p-3 text-xs text-red-400">
+              <div className="flex items-center space-x-2 rounded-md border border-red-500/20 bg-red-950/20 p-2.5 text-xs text-red-400">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{errorMessage}</span>
               </div>

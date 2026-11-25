@@ -11,6 +11,7 @@ import {
   NodeProps,
   BackgroundVariant,
   Node,
+  MarkerType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
@@ -18,13 +19,16 @@ import { VisualGraph, NodeType } from '../types/meeting';
 import { formatTime } from '../utils/format';
 import {
   Clock,
+  GitBranch,
+  Loader2,
   User,
+  Compass,
   CheckCircle2,
-  CheckSquare,
+  Zap,
   HelpCircle,
   Lightbulb,
-  Compass,
-  ArrowRight,
+  Flag,
+  Layers,
 } from 'lucide-react';
 
 export interface CustomNodeData extends Record<string, unknown> {
@@ -34,6 +38,7 @@ export interface CustomNodeData extends Record<string, unknown> {
   timestamp_start: number;
   timestamp_end: number;
   speaker?: string | null;
+  stepIndex?: number;
   onSeek: (time: number) => void;
 }
 
@@ -42,136 +47,220 @@ export type MeetingNodeType = Node<CustomNodeData, 'meetingNode'>;
 interface GraphCanvasProps {
   graph: VisualGraph;
   graphType?: 'flowchart' | 'mindmap';
+  hasContent?: boolean;
   onSeek: (time: number) => void;
+  onGenerateFlowchart?: () => void;
+  isGenerating?: boolean;
 }
 
-const NODE_CONFIG: Record<
+const TYPE_STYLES: Record<
   NodeType,
-  { border: string; bg: string; text: string; icon: React.ReactNode; glow: string }
+  { label: string; text: string; bg: string; accentBar: string; icon: React.FC<{ className?: string }> }
 > = {
   root: {
-    border: 'border-cyan-500',
-    bg: 'bg-slate-900/90',
-    text: 'text-cyan-400',
-    icon: <Compass className="h-3.5 w-3.5" />,
-    glow: 'shadow-[0_0_15px_rgba(34,211,238,0.3)]',
+    label: 'Root',
+    text: 'text-[var(--accent-violet)]',
+    bg: 'bg-[var(--accent-violet)]/12 border border-[var(--accent-violet)]/35',
+    accentBar: 'from-[var(--accent-violet)] to-[var(--accent-cyan)]',
+    icon: Compass,
   },
   decision: {
-    border: 'border-emerald-500',
-    bg: 'bg-slate-900/90',
-    text: 'text-emerald-400',
-    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
-    glow: 'shadow-[0_0_15px_rgba(16,185,129,0.3)]',
+    label: 'Decision',
+    text: 'text-[var(--accent-cyan)]',
+    bg: 'bg-[var(--accent-cyan)]/12 border border-[var(--accent-cyan)]/35',
+    accentBar: 'from-[var(--accent-cyan)] to-[var(--accent-cyan)]/50',
+    icon: CheckCircle2,
   },
   action: {
-    border: 'border-blue-500',
-    bg: 'bg-slate-900/90',
-    text: 'text-blue-400',
-    icon: <CheckSquare className="h-3.5 w-3.5" />,
-    glow: 'shadow-[0_0_15px_rgba(59,130,246,0.3)]',
+    label: 'Action',
+    text: 'text-[var(--accent-cyan)]',
+    bg: 'bg-[var(--accent-cyan)]/12 border border-[var(--accent-cyan)]/35',
+    accentBar: 'from-[var(--accent-cyan)] to-[var(--accent-violet)]',
+    icon: Zap,
   },
   question: {
-    border: 'border-amber-500',
-    bg: 'bg-slate-900/90',
-    text: 'text-amber-400',
-    icon: <HelpCircle className="h-3.5 w-3.5" />,
-    glow: 'shadow-[0_0_15px_rgba(245,158,11,0.3)]',
+    label: 'Question',
+    text: 'text-[var(--accent-violet)]',
+    bg: 'bg-[var(--accent-violet)]/12 border border-[var(--accent-violet)]/35',
+    accentBar: 'from-[var(--accent-violet)] to-[var(--accent-violet)]/50',
+    icon: HelpCircle,
   },
   insight: {
-    border: 'border-purple-500',
-    bg: 'bg-slate-900/90',
-    text: 'text-purple-400',
-    icon: <Lightbulb className="h-3.5 w-3.5" />,
-    glow: 'shadow-[0_0_15px_rgba(168,85,247,0.3)]',
+    label: 'Insight',
+    text: 'text-[var(--accent-violet)]',
+    bg: 'bg-[var(--accent-violet)]/12 border border-[var(--accent-violet)]/35',
+    accentBar: 'from-[var(--accent-violet)] to-[var(--accent-cyan)]',
+    icon: Lightbulb,
   },
   milestone: {
-    border: 'border-pink-500',
-    bg: 'bg-slate-900/90',
-    text: 'text-pink-400',
-    icon: <ArrowRight className="h-3.5 w-3.5" />,
-    glow: 'shadow-[0_0_15px_rgba(236,72,153,0.3)]',
+    label: 'Milestone',
+    text: 'text-[var(--accent-cyan)]',
+    bg: 'bg-[var(--accent-cyan)]/12 border border-[var(--accent-cyan)]/35',
+    accentBar: 'from-[var(--accent-cyan)] to-[var(--accent-violet)]',
+    icon: Flag,
   },
   topic: {
-    border: 'border-slate-700',
-    bg: 'bg-slate-900/90',
-    text: 'text-slate-300',
-    icon: <Compass className="h-3.5 w-3.5" />,
-    glow: 'shadow-md',
+    label: 'Topic',
+    text: 'text-[var(--text-secondary)]',
+    bg: 'bg-[var(--subtle-fill)] border border-[var(--border)]',
+    accentBar: 'from-[var(--accent-violet)]/60 to-[var(--border)]',
+    icon: Layers,
   },
   subtopic: {
-    border: 'border-slate-800',
-    bg: 'bg-slate-900/80',
-    text: 'text-slate-400',
-    icon: <Compass className="h-3.5 w-3.5" />,
-    glow: 'shadow-sm',
+    label: 'Subtopic',
+    text: 'text-[var(--text-secondary)]',
+    bg: 'bg-[var(--subtle-fill)] border border-[var(--border)]',
+    accentBar: 'from-[var(--accent-cyan)]/60 to-[var(--border)]',
+    icon: Layers,
   },
 };
 
-// Custom React Flow Node
-const CustomMeetingNode: React.FC<NodeProps<MeetingNodeType>> = ({ data }) => {
-  const nodeType: NodeType = data.node_type || 'topic';
-  const config = NODE_CONFIG[nodeType] || NODE_CONFIG.topic;
+// Big, Appealing React Flow Node Card
+const MeetingNode: React.FC<NodeProps<MeetingNodeType>> = ({
+  data,
+  targetPosition = Position.Left,
+  sourcePosition = Position.Right,
+}) => {
+  const style = TYPE_STYLES[data.node_type] || TYPE_STYLES.topic;
+  const Icon = style.icon;
+  const stepNum =
+    data.stepIndex !== undefined ? String(data.stepIndex + 1).padStart(2, '0') : null;
 
   return (
     <div
       onClick={() => data.onSeek(data.timestamp_start)}
-      className={`group relative flex min-w-[200px] max-w-[280px] cursor-pointer flex-col rounded-xl border-2 p-3 backdrop-blur transition-all duration-200 hover:scale-105 active:scale-95 ${config.border} ${config.bg} ${config.glow}`}
+      className="group relative flex w-[300px] flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--panel-bg)] p-4 shadow-lg transition-all duration-200 hover:border-[var(--accent-violet)] hover:shadow-[0_8px_30px_rgba(196,181,253,0.18)] hover:-translate-y-0.5 cursor-pointer"
     >
-      <Handle type="target" position={Position.Left} className="!bg-cyan-500 !w-2 !h-2" />
+      {/* Top Gradient Accent Bar */}
+      <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${style.accentBar}`} />
 
-      {/* Header: Type Pill & Timestamp */}
-      <div className="flex items-center justify-between mb-1.5">
-        <div className={`flex items-center space-x-1 text-[11px] font-semibold uppercase tracking-wider ${config.text}`}>
-          {config.icon}
-          <span>{nodeType}</span>
+      <Handle
+        type="target"
+        position={targetPosition}
+        className="!h-2.5 !w-2.5 !rounded-full !border-2 !border-[var(--panel-bg)] !bg-[var(--accent-violet)]"
+      />
+
+      {/* Header Row: Step + Category Badge + Timestamp */}
+      <div className="flex items-center justify-between mb-2.5 pt-0.5">
+        <div className="flex items-center space-x-2">
+          {stepNum && (
+            <span className="font-mono text-[10px] font-semibold text-[var(--text-secondary)]/70">
+              {stepNum}
+            </span>
+          )}
+          <span
+            className={`inline-flex items-center space-x-1 rounded-md px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider ${style.bg} ${style.text}`}
+          >
+            <Icon className="h-3 w-3" />
+            <span>{style.label}</span>
+          </span>
         </div>
+
         <button
           onClick={(e) => {
             e.stopPropagation();
             data.onSeek(data.timestamp_start);
           }}
-          className="flex items-center space-x-1 rounded bg-slate-800/90 px-1.5 py-0.5 font-mono text-[10px] text-cyan-300 hover:bg-cyan-500/20"
-          title="Click to seek audio"
+          className="flex items-center space-x-1 rounded-md border border-[var(--accent-cyan)]/25 bg-[var(--accent-cyan)]/10 px-2 py-0.5 font-mono text-[10px] font-medium text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/20 transition"
+          title="Jump to this moment in recording"
         >
           <Clock className="h-2.5 w-2.5" />
           <span>{formatTime(data.timestamp_start)}</span>
         </button>
       </div>
 
-      {/* Label */}
-      <p className="text-xs font-medium leading-snug text-slate-100 mb-1">{data.label}</p>
+      {/* Main Node Title / Label */}
+      <p className="text-[13.5px] font-semibold text-[var(--text-primary)] leading-snug line-clamp-3 group-hover:text-[var(--accent-violet)] transition">
+        {data.label}
+      </p>
 
-      {/* Speaker if present */}
+      {/* Footer: Speaker */}
       {data.speaker && (
-        <div className="mt-1 flex items-center text-[10px] text-slate-400">
-          <User className="mr-1 h-2.5 w-2.5 text-slate-500" />
-          <span>{data.speaker}</span>
+        <div className="mt-3 pt-2 border-t border-[var(--border)]/60 flex items-center space-x-1.5 text-[11px] font-mono text-[var(--text-secondary)] truncate">
+          <User className="h-3 w-3 shrink-0 text-[var(--accent-violet)]" />
+          <span className="truncate">{data.speaker}</span>
         </div>
       )}
 
-      <Handle type="source" position={Position.Right} className="!bg-cyan-500 !w-2 !h-2" />
+      <Handle
+        type="source"
+        position={sourcePosition}
+        className="!h-2.5 !w-2.5 !rounded-full !border-2 !border-[var(--panel-bg)] !bg-[var(--accent-cyan)]"
+      />
     </div>
   );
 };
 
 const nodeTypes = {
-  meetingNode: CustomMeetingNode,
+  meetingNode: MeetingNode,
 };
 
-// Dagre Layout Algorithm
-function getLayoutedElements(nodes: any[], edges: any[], direction = 'LR') {
+const NODE_WIDTH = 300;
+const NODE_HEIGHT = 148;
+
+/**
+ * Computes a compact, balanced layout that avoids super-long single lines.
+ * - For sequential or mostly-linear graphs, wraps into a 3-column serpentine S-flow.
+ * - For branching graphs, uses a compact top-to-bottom Dagre layout.
+ */
+function getBalancedLayoutedElements(nodes: Node[], edges: any[]) {
+  if (nodes.length === 0) return { nodes, edges };
+
+  // Check branching factor (max outgoing edges from any node)
+  const outDegree: Record<string, number> = {};
+  edges.forEach((e) => {
+    outDegree[e.source] = (outDegree[e.source] || 0) + 1;
+  });
+  const maxOut = Math.max(0, ...Object.values(outDegree));
+
+  // If sequential / linear (or small), wrap into a compact 3-column serpentine flow
+  if (maxOut <= 1) {
+    const cols = nodes.length <= 2 ? nodes.length : 3;
+    const xGap = 410;
+    const yGap = 230;
+
+    const layoutedNodes = nodes.map((node, index) => {
+      const row = Math.floor(index / cols);
+      const colInRow = index % cols;
+      const isReversedRow = row % 2 === 1;
+      const col = isReversedRow ? cols - 1 - colInRow : colInRow;
+
+      let targetPosition = Position.Left;
+      let sourcePosition = Position.Right;
+
+      if (isReversedRow) {
+        targetPosition = colInRow === 0 ? Position.Top : Position.Right;
+        sourcePosition = colInRow === cols - 1 ? Position.Bottom : Position.Left;
+      } else {
+        targetPosition = row > 0 && colInRow === 0 ? Position.Top : Position.Left;
+        sourcePosition = colInRow === cols - 1 ? Position.Bottom : Position.Right;
+      }
+
+      return {
+        ...node,
+        targetPosition,
+        sourcePosition,
+        position: {
+          x: col * xGap,
+          y: row * yGap,
+        },
+      };
+    });
+
+    return { nodes: layoutedNodes, edges };
+  }
+
+  // Branching graph: compact Top-to-Bottom Dagre layout
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
-
-  const isHorizontal = direction === 'LR';
   dagreGraph.setGraph({
-    rankdir: direction,
-    nodesep: 40,
-    ranksep: 80,
+    rankdir: 'TB',
+    nodesep: 50,
+    ranksep: 75,
   });
 
   nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: 240, height: 110 });
+    dagreGraph.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
   });
 
   edges.forEach((edge) => {
@@ -184,11 +273,11 @@ function getLayoutedElements(nodes: any[], edges: any[], direction = 'LR') {
     const nodeWithPosition = dagreGraph.node(node.id);
     return {
       ...node,
-      targetPosition: isHorizontal ? Position.Left : Position.Top,
-      sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
+      targetPosition: Position.Top,
+      sourcePosition: Position.Bottom,
       position: {
-        x: nodeWithPosition.x - 120,
-        y: nodeWithPosition.y - 55,
+        x: nodeWithPosition.x - NODE_WIDTH / 2,
+        y: nodeWithPosition.y - NODE_HEIGHT / 2,
       },
     };
   });
@@ -198,20 +287,24 @@ function getLayoutedElements(nodes: any[], edges: any[], direction = 'LR') {
 
 export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   graph,
+  hasContent = true,
   onSeek,
+  onGenerateFlowchart,
+  isGenerating,
 }) => {
-  const [direction, setDirection] = React.useState<'LR' | 'TB'>('LR');
+  const hasNodes = Boolean(graph && graph.nodes && graph.nodes.length > 0);
 
   const { initialNodes, initialEdges } = useMemo(() => {
     if (!graph || !graph.nodes || graph.nodes.length === 0) {
       return { initialNodes: [], initialEdges: [] };
     }
 
-    const rawNodes = graph.nodes.map((n) => ({
+    const rawNodes: Node[] = graph.nodes.map((n, idx) => ({
       id: n.id,
       type: 'meetingNode',
       data: {
         ...n,
+        stepIndex: idx,
         onSeek,
       },
       position: { x: 0, y: 0 },
@@ -224,16 +317,32 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       label: e.label || undefined,
       type: 'smoothstep',
       animated: true,
-      style: { stroke: '#06b6d4', strokeWidth: 2 },
-      labelStyle: { fill: '#94a3b8', fontSize: 10, fontFamily: 'monospace' },
-      labelBgStyle: { fill: '#0f172a', fillOpacity: 0.8 },
-      labelBgPadding: [4, 4] as [number, number],
-      labelBgBorderRadius: 4,
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        color: 'var(--accent-violet)',
+        width: 18,
+        height: 18,
+      },
+      style: { stroke: 'var(--accent-violet)', strokeWidth: 2, opacity: 0.75 },
+      labelStyle: {
+        fill: 'var(--text-primary)',
+        fontSize: 11,
+        fontWeight: 500,
+        fontFamily: 'IBM Plex Mono, monospace',
+      },
+      labelBgStyle: {
+        fill: 'var(--panel-bg)',
+        stroke: 'var(--border)',
+        strokeWidth: 1,
+        fillOpacity: 0.95,
+      },
+      labelBgPadding: [8, 4] as [number, number],
+      labelBgBorderRadius: 6,
     }));
 
-    const layout = getLayoutedElements(rawNodes, rawEdges, direction);
+    const layout = getBalancedLayoutedElements(rawNodes, rawEdges);
     return { initialNodes: layout.nodes, initialEdges: layout.edges };
-  }, [graph, direction, onSeek]);
+  }, [graph, onSeek]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -252,17 +361,63 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     [onSeek]
   );
 
+  if (!hasNodes) {
+    if (!hasContent) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center p-8 text-center animate-fade rounded-xl border border-[var(--border)] bg-[var(--panel-bg)]">
+          <div className="h-12 w-12 rounded-full bg-[var(--subtle-fill)] border border-[var(--border)] flex items-center justify-center text-[var(--text-secondary)] mb-3">
+            <GitBranch className="h-6 w-6 text-[var(--text-secondary)]/40" />
+          </div>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-1">
+            Not Enough Content for a Flowchart
+          </h3>
+          <p className="text-xs text-[var(--text-secondary)] max-w-sm">
+            This recording contains no spoken dialogue or structured discussion to map into a flowchart.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-8 text-center animate-fade rounded-xl border border-[var(--border)] bg-[var(--panel-bg)]">
+        <div className="h-12 w-12 rounded-full bg-[var(--subtle-fill)] border border-[var(--border)] flex items-center justify-center text-[var(--text-secondary)] mb-3">
+          <GitBranch className="h-6 w-6 text-[var(--accent-violet)]" />
+        </div>
+        <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-1">
+          Visual Flowchart Not Generated
+        </h3>
+        <p className="text-xs text-[var(--text-secondary)] max-w-sm mb-5">
+          You chose Notes Only during upload. You can synthesize a visual decision flowchart on demand.
+        </p>
+        {onGenerateFlowchart && (
+          <button
+            onClick={onGenerateFlowchart}
+            disabled={isGenerating}
+            className="btn-gradient !h-10 !px-5 !text-xs flex items-center space-x-2 disabled:opacity-50"
+          >
+            {isGenerating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <GitBranch className="h-4 w-4" />
+            )}
+            <span>{isGenerating ? 'Generating Flowchart...' : 'Generate Visual Flowchart'}</span>
+          </button>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-xl border border-slate-800 bg-slate-950 shadow-2xl">
-      {/* Top Floating Controls */}
-      <div className="absolute right-4 top-4 z-10 flex items-center space-x-2 rounded-lg border border-slate-800 bg-slate-900/80 p-1.5 backdrop-blur shadow-lg">
-        <button
-          onClick={() => setDirection(direction === 'LR' ? 'TB' : 'LR')}
-          className="rounded px-2 py-1 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-cyan-400"
-          title="Toggle layout direction"
-        >
-          {direction === 'LR' ? 'Horizontal →' : 'Vertical ↓'}
-        </button>
+    <div className="relative h-full w-full overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel-bg)] animate-slide-up">
+      {/* Subtle Top-Left Legend Pill */}
+      <div className="pointer-events-none absolute left-3.5 top-3.5 z-10 flex items-center space-x-2 rounded-lg border border-[var(--border)] bg-[var(--panel-bg)]/90 px-3 py-1.5 backdrop-blur shadow-sm">
+        <GitBranch className="h-3.5 w-3.5 text-[var(--accent-violet)]" />
+        <span className="font-mono text-[11px] font-medium text-[var(--text-primary)]">
+          Interactive Flow
+        </span>
+        <span className="font-mono text-[10px] text-[var(--text-secondary)]">
+          · Click any node to verify timestamp
+        </span>
       </div>
 
       <ReactFlow
@@ -273,22 +428,16 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
         fitView
-        minZoom={0.2}
-        maxZoom={2.0}
+        fitViewOptions={{ padding: 0.14, maxZoom: 1.35 }}
+        minZoom={0.35}
+        maxZoom={1.75}
       >
-        <Background color="#334155" gap={20} size={1} variant={BackgroundVariant.Dots} />
-        <Controls className="!bg-slate-900 !border-slate-800 !text-slate-300 fill-slate-300 rounded-lg overflow-hidden shadow-lg" />
+        <Background color="var(--border)" gap={24} size={1.2} variant={BackgroundVariant.Dots} />
+        <Controls className="!bg-[var(--panel-bg)] !border-[var(--border)] !text-[var(--text-secondary)] fill-[var(--text-secondary)] rounded-lg overflow-hidden shadow-md" />
         <MiniMap
-          nodeColor={(node: any) => {
-            const type = node.data?.node_type;
-            if (type === 'decision') return '#10b981';
-            if (type === 'action') return '#3b82f6';
-            if (type === 'question') return '#f59e0b';
-            if (type === 'root') return '#22d3ee';
-            return '#64748b';
-          }}
-          className="!bg-slate-900/90 !border-slate-800 !rounded-lg"
-          maskColor="rgba(15, 23, 42, 0.7)"
+          nodeColor="var(--accent-violet)"
+          className="!bg-[var(--panel-bg)]/90 !border-[var(--border)] !rounded-lg shadow-md"
+          maskColor="rgba(0, 0, 0, 0.35)"
         />
       </ReactFlow>
     </div>

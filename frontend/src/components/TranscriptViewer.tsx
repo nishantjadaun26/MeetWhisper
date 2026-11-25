@@ -1,28 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TranscriptSegment } from '../types/meeting';
 import { formatTime } from '../utils/format';
-import { Search, Clock, User, ArrowDown } from 'lucide-react';
+import { Search, Clock, ArrowDown } from 'lucide-react';
 
 interface TranscriptViewerProps {
   segments: TranscriptSegment[];
   currentTime: number;
   onSeek: (time: number) => void;
-}
-
-const SPEAKER_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  'speaker 1': { bg: 'bg-cyan-500/10', text: 'text-cyan-400', border: 'border-cyan-500/30' },
-  'speaker 2': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30' },
-  'speaker 3': { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/30' },
-  'speaker 4': { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30' },
-  default: { bg: 'bg-indigo-500/10', text: 'text-indigo-400', border: 'border-indigo-500/30' },
-};
-
-function getSpeakerColor(speaker: string) {
-  const normalized = speaker.toLowerCase().trim();
-  for (const key of Object.keys(SPEAKER_COLORS)) {
-    if (normalized.includes(key)) return SPEAKER_COLORS[key];
-  }
-  return SPEAKER_COLORS.default;
 }
 
 export const TranscriptViewer: React.FC<TranscriptViewerProps> = ({
@@ -35,7 +19,6 @@ export const TranscriptViewer: React.FC<TranscriptViewerProps> = ({
   const activeSegmentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Active segment detection
   const activeSegmentIndex = segments.findIndex(
     (s) => currentTime >= s.start_time && currentTime <= s.end_time
   );
@@ -50,98 +33,104 @@ export const TranscriptViewer: React.FC<TranscriptViewerProps> = ({
   }, [activeSegmentIndex, autoScroll]);
 
   const filteredSegments = segments.filter((s) =>
-    filterText ? s.text.toLowerCase().includes(filterText.toLowerCase()) || s.speaker.toLowerCase().includes(filterText.toLowerCase()) : true
+    filterText
+      ? s.text.toLowerCase().includes(filterText.toLowerCase()) ||
+        s.speaker.toLowerCase().includes(filterText.toLowerCase())
+      : true
   );
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60 shadow-xl backdrop-blur">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel-bg)]">
       {/* Header & Search */}
-      <div className="flex items-center justify-between border-b border-slate-800/80 p-3">
+      <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
         <div className="flex items-center space-x-2">
-          <span className="font-semibold text-sm text-slate-200">Diarized Transcript</span>
-          <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-400 font-mono">
-            {segments.length} segments
+          <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] font-mono">
+            Transcript
+          </span>
+          <span className="font-mono text-[11px] text-[var(--text-secondary)]/50">
+            ({segments.length})
           </span>
         </div>
 
         <div className="flex items-center space-x-2">
-          {/* Filter input */}
           <div className="relative">
-            <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-500" />
+            <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-[var(--text-secondary)]/40" />
             <input
               type="text"
-              placeholder="Search transcript..."
+              placeholder="Find in transcript..."
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
-              className="h-8 w-44 rounded-lg border border-slate-700 bg-slate-800/80 pl-8 pr-3 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+              className="h-7 w-36 rounded-md border border-[var(--border)] bg-[var(--input-bg)] pl-8 pr-2 text-xs text-[var(--text-primary)] placeholder-[var(--text-secondary)]/40 transition focus:w-48 focus:border-[var(--accent-violet)] focus:outline-none font-mono"
             />
           </div>
 
-          {/* Auto-scroll toggle */}
           <button
             onClick={() => setAutoScroll(!autoScroll)}
-            className={`flex items-center space-x-1 rounded-lg px-2 py-1 text-xs transition border ${
+            className={`flex items-center space-x-1 rounded-md px-2 py-1 text-[11px] font-mono transition border ${
               autoScroll
-                ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-400'
-                : 'border-slate-800 bg-slate-800/50 text-slate-400 hover:text-slate-200'
+                ? 'border-[var(--accent-violet)]/40 bg-[var(--accent-violet)]/10 text-[var(--accent-violet)]'
+                : 'border-[var(--border)] text-[var(--text-secondary)]/60 hover:text-[var(--text-secondary)]'
             }`}
             title="Auto-scroll to current speaker"
           >
             <ArrowDown className="h-3 w-3" />
-            <span className="text-[11px]">Follow</span>
+            <span>Follow</span>
           </button>
         </div>
       </div>
 
-      {/* Segments list */}
-      <div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+      {/* Segments List */}
+      <div ref={containerRef} className="flex-1 overflow-y-auto p-3 space-y-2">
         {filteredSegments.length === 0 ? (
-          <div className="flex h-40 items-center justify-center text-xs text-slate-500">
-            No matching transcript segments
+          <div className="flex h-full items-center justify-center text-xs text-[var(--text-secondary)]/50">
+            {segments.length === 0 ? 'No speech detected in this recording' : 'No matching results'}
           </div>
         ) : (
-          filteredSegments.map((segment, idx) => {
-            const isActive = idx === activeSegmentIndex;
-            const speakerColor = getSpeakerColor(segment.speaker);
+          filteredSegments.map((segment) => {
+            const isActive =
+              currentTime >= segment.start_time && currentTime <= segment.end_time;
 
             return (
               <div
-                key={segment.id || idx}
+                key={segment.id}
                 ref={isActive ? activeSegmentRef : null}
                 onClick={() => onSeek(segment.start_time)}
-                className={`group relative cursor-pointer rounded-lg border p-3 transition-all ${
+                className={`group cursor-pointer rounded-lg border p-3 transition-all duration-150 ${
                   isActive
-                    ? 'border-cyan-500/60 bg-cyan-950/20 shadow-[0_0_12px_rgba(34,211,238,0.15)] ring-1 ring-cyan-500/30'
-                    : 'border-slate-800/60 bg-slate-900/40 hover:border-slate-700 hover:bg-slate-850'
+                    ? 'border-[var(--accent-cyan)] bg-[var(--accent-cyan)]/[0.08] shadow-sm'
+                    : 'border-[var(--border)]/70 bg-[var(--card-bg)] hover:border-[var(--accent-violet)]/70 hover:bg-[var(--card-hover-bg)]'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1.5">
-                  {/* Speaker badge */}
                   <div className="flex items-center space-x-2">
                     <span
-                      className={`flex items-center space-x-1 rounded-md px-2 py-0.5 text-xs font-medium border ${speakerColor.bg} ${speakerColor.text} ${speakerColor.border}`}
+                      className={`text-xs font-semibold ${
+                        isActive ? 'text-[var(--accent-cyan)]' : 'text-[var(--accent-violet)]'
+                      }`}
                     >
-                      <User className="h-3 w-3" />
-                      <span>{segment.speaker}</span>
+                      {segment.speaker}
                     </span>
                   </div>
 
-                  {/* Timestamp badge */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onSeek(segment.start_time);
                     }}
-                    className="flex items-center space-x-1 rounded bg-slate-800/80 px-1.5 py-0.5 font-mono text-[11px] text-slate-400 transition hover:bg-cyan-500/20 hover:text-cyan-300"
-                    title="Click to seek audio"
+                    className={`flex items-center space-x-1 font-mono text-[10px] transition ${
+                      isActive ? 'text-[var(--accent-cyan)]' : 'text-[var(--text-secondary)]/60 group-hover:text-[var(--accent-cyan)]'
+                    }`}
                   >
                     <Clock className="h-2.5 w-2.5" />
                     <span>{formatTime(segment.start_time)}</span>
                   </button>
                 </div>
 
-                {/* Text */}
-                <p className={`text-xs leading-relaxed ${isActive ? 'text-slate-100 font-medium' : 'text-slate-300'}`}>
+                <p
+                  className={`text-xs leading-relaxed transition ${
+                    isActive ? 'text-[var(--text-primary)] font-medium' : 'text-[var(--text-secondary)]'
+                  }`}
+                >
                   {segment.text}
                 </p>
               </div>
