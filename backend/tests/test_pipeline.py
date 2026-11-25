@@ -17,7 +17,7 @@ async def test_execute_processing_pipeline(db_session):
 
     async with AsyncSessionLocal() as session:
         meeting = Meeting(
-            title="Pipeline Test Meeting",
+            title="Sample Architecture Review",
             filename="test_pipeline_meeting.wav",
             file_path=test_file,
             file_size_bytes=len(test_file),
